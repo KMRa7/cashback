@@ -839,6 +839,19 @@
     document.addEventListener('DOMContentLoaded', () => {
       const boxes = document.querySelectorAll('#colorSamples .color-box');
       const hidden = document.getElementById('scColor');
+      if (!boxes.length || !hidden) return;
+    
+      // 初期選択（hiddenの値を優先。該当なしなら先頭を選択）
+      const init = (hidden.value || '').toLowerCase();
+      let hit = false;
+      boxes.forEach(box => {
+        if (box.dataset.color && box.dataset.color.toLowerCase() === init) {
+          box.classList.add('selected'); hit = true;
+        }
+      });
+      if (!hit) { boxes[0].classList.add('selected'); hidden.value = boxes[0].dataset.color; }
+    
+      // クリックで選択切替
       boxes.forEach(box => {
         box.addEventListener('click', () => {
           boxes.forEach(b => b.classList.remove('selected'));
