@@ -59,25 +59,29 @@
     #sec-card .two{display:flex;flex-direction:column;gap:12px;}
     @media (min-width:720px){#sec-card .two{flex-direction:row;}}
     /* ショップカード：カラー選択 */
-.color-samples{
-  display:grid;
-  grid-template-columns:repeat(auto-fit, minmax(80px, 1fr));
-  gap:8px;
-}
-.color-box{
-  background: var(--c);
-  padding:12px 0;
-  text-align:center;
-  border-radius:8px;
-  color:#fff;
-  font-weight:600;
-  font-size:13px;
-  border:1px solid rgba(0,0,0,.1);
-  cursor:pointer;
-  user-select:none;
-}
-.color-box span{ font-size:11px; display:block; opacity:.8; }
-.color-box.selected{ outline:2px solid var(--accent); outline-offset:2px; }
+    .color-samples{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(80px, 1fr));
+      gap:8px;
+    }
+    .color-box{
+      background: var(--c);
+      padding:12px 0;
+      text-align:center;
+      border-radius:8px;
+      color:#fff;
+      font-weight:600;
+      font-size:13px;
+      border:1px solid rgba(0,0,0,.1);
+      cursor:pointer;
+      user-select:none;
+    }
+    .color-box span{ font-size:11px; display:block; opacity:.8; }
+    .color-box.selected{ outline:2px solid var(--accent); outline-offset:2px; }
+    .card.highlight {
+      box-shadow: 0 0 0 3px rgba(6,199,85,0.4) !important;
+      transition: box-shadow .3s ease;
+    }
   </style>
 </head>
 <body>
@@ -931,28 +935,46 @@
       window.addEventListener('scroll', renderHotspots);
     }
 
+    function toggleHighlight(btnIndex, on) {
+      const card = document.getElementById('rmBtn' + btnIndex);
+      const hotspot = document.querySelector(`.rm-hot[data-btn="${btnIndex}"]`);
+      if (card) card.classList.toggle('highlight', !!on);
+      if (hotspot) hotspot.classList.toggle('active', !!on);
+    }
+    
     function highlightAndScroll(btnIndex) {
+      // いったん全て解除
+      for (let i = 1; i <= 6; i++) {
+        const c = document.getElementById('rmBtn' + i);
+        const h = document.querySelector(`.rm-hot[data-btn="${i}"]`);
+        if (c) c.classList.remove('highlight');
+        if (h) h.classList.remove('active');
+      }
+    
       const card = document.getElementById('rmBtn' + btnIndex);
       const hotspot = document.querySelector(`.rm-hot[data-btn="${btnIndex}"]`);
       if (!card || !hotspot) return;
+    
       card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      hotspot.classList.add('active');
-      setTimeout(() => hotspot.classList.remove('active'), 1200);
+    
+      // スクロール後に一時的に強調
+      setTimeout(() => {
+        card.classList.add('highlight');
+        hotspot.classList.add('active');
+        setTimeout(() => {
+          card.classList.remove('highlight');
+          hotspot.classList.remove('active');
+        }, 1500);
+      }, 350);
     }
-
-    window.addEventListener('load', () => {
-      initRichmenuHotspots();
-      wireInputFocusToHighlight();
-      mountLocalActionsToAll(); // 最初から各セクションに「送信」だけ出す
-    });
-
+    
     function wireInputFocusToHighlight() {
       for (let i = 1; i <= 6; i++) {
         const card = document.getElementById('rmBtn' + i);
         if (!card) continue;
         card.querySelectorAll('input,select,textarea').forEach(el => {
-          el.addEventListener('focus', () => {});
-          el.addEventListener('blur', () => {});
+          el.addEventListener('focus', () => toggleHighlight(i, true));
+          el.addEventListener('blur',  () => toggleHighlight(i, false));
         });
       }
     }
