@@ -22,7 +22,8 @@
     button{font-size:16px;font-weight:600;border-radius:8px;padding:14px;cursor:pointer;border:none;transition:.2s ease;}
     button.primary{background:var(--accent);color:#fff;}
     button.primary:hover{background:#05b54e;}
-    /* カードUI / プレビュー風見た目は残す（自動表示） */
+
+    /* カードUI / 見た目プレビュー（自動） */
     .sample-container{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;}
     .sample-card{width:200px;border-radius:12px;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.08);overflow:hidden;border:1px solid #e0e0e0;font-size:13px;}
     .sample-card img{width:100%;height:120px;object-fit:cover;}
@@ -43,6 +44,7 @@
     .grid{display:flex;flex-direction:column;gap:10px;}
     @media (min-width:720px){.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}}
     .card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px;box-shadow:0 2px 6px rgba(0,0,0,.05);margin-bottom:10px;}
+
     /* リッチメニュー */
     .rm-map{position:relative;display:flex;justify-content:center;align-items:center;width:100%;margin:12px 0;}
     .rm-map img{display:block;width:100%;max-width:320px;height:auto;border-radius:12px;border:1px solid var(--border);box-shadow:0 2px 6px rgba(0,0,0,0.08);object-fit:contain;pointer-events:none;}
@@ -52,36 +54,22 @@
     .legend .key::before{content:"■ ";color:var(--accent);}
     .local-actions{position:sticky;bottom:-8px;background:#fff;padding:12px 0 4px;border-top:1px solid var(--border);display:flex;gap:10px;z-index:5;}
     .local-actions .tip{margin-left:auto;font-size:12px;color:var(--sub);align-self:center;}
+
     /* sec-card 内装飾 */
     #sec-card .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px 16px 20px;box-shadow:0 2px 5px rgba(0,0,0,.05);margin-bottom:18px;}
     #sec-card .subfields,#sec-card .two{background:#f9fafb;border-radius:8px;padding:10px 12px 12px;margin-top:10px;border:1px solid #e9edf3;}
     #sec-card input[type="file"]{background:#fff;padding:10px;border-radius:6px;border:1px solid #ccc;}
     #sec-card .two{display:flex;flex-direction:column;gap:12px;}
     @media (min-width:720px){#sec-card .two{flex-direction:row;}}
-    /* ショップカード：カラー選択 */
-    .color-samples{
-      display:grid;
-      grid-template-columns:repeat(auto-fit, minmax(80px, 1fr));
-      gap:8px;
-    }
-    .color-box{
-      background: var(--c);
-      padding:12px 0;
-      text-align:center;
-      border-radius:8px;
-      color:#fff;
-      font-weight:600;
-      font-size:13px;
-      border:1px solid rgba(0,0,0,.1);
-      cursor:pointer;
-      user-select:none;
-    }
-    .color-box span{ font-size:11px; display:block; opacity:.8; }
-    .color-box.selected{ outline:2px solid var(--accent); outline-offset:2px; }
-    .card.highlight {
-      box-shadow: 0 0 0 3px rgba(6,199,85,0.4) !important;
-      transition: box-shadow .3s ease;
-    }
+
+    /* ショップカード：カラー選択（12色） */
+    .color-samples{display:grid;grid-template-columns:repeat(auto-fit, minmax(80px, 1fr));gap:8px;}
+    .color-box{background:var(--c);padding:12px 0;text-align:center;border-radius:8px;color:#fff;font-weight:600;font-size:13px;border:1px solid rgba(0,0,0,.1);cursor:pointer;user-select:none;}
+    .color-box span{font-size:11px;display:block;opacity:.8;}
+    .color-box.selected{outline:2px solid var(--accent);outline-offset:2px;}
+
+    /* リッチメニュー強調 */
+    .card.highlight{box-shadow:0 0 0 3px rgba(6,199,85,0.4) !important;transition:box-shadow .3s ease;}
   </style>
 </head>
 <body>
@@ -165,7 +153,7 @@
       <div class="mini" style="margin:6px 0 10px">各ボタンは「ボタン名」と「遷移先」の両方を入れると有効になります（片方のみ入力はエラー）。</div>
 
       <div id="rmButtons" class="row" style="flex-direction:column; gap:12px">
-        <!-- 1〜6（省略せずそのまま） -->
+        <!-- 1〜6 -->
         <div class="card" id="rmBtn1">
           <div class="mini" style="margin-bottom:6px">ボタン1</div>
           <div class="two">
@@ -476,11 +464,18 @@
       const v = $('#requestType').value;
       if (!v) return;
       show(sections[v], true);
+
+      // 表示直後の初期化（幅0対策）
+      if (v === 'richmenu') {
+        initRichmenuHotspots();
+        wireInputFocusToHighlight();
+      }
       if (v === 'card') renderCards();
+
       ensureLocalActions(sections[v]);
     });
 
-    // ---- カードUI生成（省略なし） ----
+    // ---- カードUI生成 ----
     function renderCards() {
       const wrap = $('#cardsWrap');
       const cntEl = $('#cardCount');
@@ -644,6 +639,9 @@
         card.innerHTML = `${buildSubfields(globalType)}${buildActions(globalType)}`;
         wrap.appendChild(card);
       }
+
+      // 軽いディレイでプレビュー反映
+      setTimeout(updateCardPreview, 200);
     }
 
     on($('#cardCount'), 'input', renderCards);
@@ -844,13 +842,12 @@
       submitForm();
     });
 
-    // カラー選択
+    // カラー選択（12色・初期選択復元）
     document.addEventListener('DOMContentLoaded', () => {
       const boxes = document.querySelectorAll('#colorSamples .color-box');
       const hidden = document.getElementById('scColor');
       if (!boxes.length || !hidden) return;
-    
-      // 初期選択（hiddenの値を優先。該当なしなら先頭を選択）
+
       const init = (hidden.value || '').toLowerCase();
       let hit = false;
       boxes.forEach(box => {
@@ -859,8 +856,7 @@
         }
       });
       if (!hit) { boxes[0].classList.add('selected'); hidden.value = boxes[0].dataset.color; }
-    
-      // クリックで選択切替
+
       boxes.forEach(box => {
         box.addEventListener('click', () => {
           boxes.forEach(b => b.classList.remove('selected'));
@@ -923,7 +919,14 @@
           const d = document.createElement('div');
           d.className = 'rm-hot';
           d.dataset.btn = g.btn;
-          Object.assign(d.style, { left: `${g.col * cellW}px`, top: `${g.row * cellH}px`, width: `${cellW}px`, height: `${cellH}px`, position: "absolute", zIndex: 20 });
+          Object.assign(d.style, {
+            left: `${g.col * cellW}px`,
+            top: `${g.row * cellH}px`,
+            width: `${cellW}px`,
+            height: `${cellH}px`,
+            position: "absolute",
+            zIndex: 20
+          });
           d.addEventListener('click', () => highlightAndScroll(g.btn));
           wrap.appendChild(d);
         });
@@ -933,6 +936,9 @@
       else img.addEventListener('load', renderHotspots);
       window.addEventListener('resize', renderHotspots);
       window.addEventListener('scroll', renderHotspots);
+
+      // 表示切替直後でも確実に描画
+      requestAnimationFrame(renderHotspots);
     }
 
     function toggleHighlight(btnIndex, on) {
@@ -941,23 +947,21 @@
       if (card) card.classList.toggle('highlight', !!on);
       if (hotspot) hotspot.classList.toggle('active', !!on);
     }
-    
+
     function highlightAndScroll(btnIndex) {
-      // いったん全て解除
       for (let i = 1; i <= 6; i++) {
         const c = document.getElementById('rmBtn' + i);
         const h = document.querySelector(`.rm-hot[data-btn="${i}"]`);
         if (c) c.classList.remove('highlight');
         if (h) h.classList.remove('active');
       }
-    
+
       const card = document.getElementById('rmBtn' + btnIndex);
       const hotspot = document.querySelector(`.rm-hot[data-btn="${btnIndex}"]`);
       if (!card || !hotspot) return;
-    
+
       card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    
-      // スクロール後に一時的に強調
+
       setTimeout(() => {
         card.classList.add('highlight');
         hotspot.classList.add('active');
@@ -967,7 +971,7 @@
         }, 1500);
       }, 350);
     }
-    
+
     function wireInputFocusToHighlight() {
       for (let i = 1; i <= 6; i++) {
         const card = document.getElementById('rmBtn' + i);
@@ -1008,12 +1012,12 @@
       document.querySelector("#cardSampleWrap").style.display = "";
 
       cards.forEach((card, idx) => {
-        const type = card.dataset.type || "product";
-        const tag = card.querySelector(".img-tag, .pd-tag, .lc-tag")?.value?.trim() || "";
+        const type  = card.dataset.type || "product";
+        const tag   = card.querySelector(".img-tag, .pd-tag, .lc-tag")?.value?.trim() || "";
         const title = card.querySelector(".pd-title, .lc-title, .ps-name")?.value?.trim() || "";
-        const desc = card.querySelector(".pd-desc, .lc-address, .ps-desc, .lc-additional")?.value?.trim() || "";
-        const price = card.querySelector(".pd-price")?.value?.trim() || "";
-        const b1 = card.querySelector(".btn1-label")?.value?.trim() || "";
+        const desc  = card.querySelector(".pd-desc, .lc-address, .ps-desc")?.value?.trim() || "";
+        const price = card.querySelector(".pd-priceText, .lc-priceText")?.value?.trim() || "";
+        const b1    = card.querySelector(".btn1-label")?.value?.trim() || "";
 
         let imgSrc = "data:image/svg+xml;base64," + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240"><rect width="400" height="240" fill="#eaeaea"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="20" fill="#999">No Image</text></svg>');
 
@@ -1022,54 +1026,52 @@
         cardEl.id = `sampleCard${idx}`;
 
         let innerHTML = "";
-        switch (type) {
-          case "location":
-            innerHTML = `
-              <img src="${imgSrc}" alt="">
-              <div class="sample-body">
-                ${tag ? `<div class="tag">${tag}</div>` : ""}
-                <div class="title">${title || "タイトルを入力"}</div>
-                <div class="desc">
-                  <div>📍 ${desc || "住所を入力"}</div>
-                  <div>🕒 ${card.querySelector(".lc-additional")?.value || ""}</div>
-                </div>
+        if (type === "location") {
+          const hours = card.querySelector(".lc-hours")?.value?.trim() || "";
+          const line2 = hours ? `🕒 ${hours}` : (price ? `💴 ${price}` : "");
+          innerHTML = `
+            <img src="${imgSrc}" alt="">
+            <div class="sample-body">
+              ${tag ? `<div class="tag">${tag}</div>` : ""}
+              <div class="title">${title || "タイトルを入力"}</div>
+              <div class="desc">
+                <div>📍 ${desc || ""}</div>
+                ${line2 ? `<div>${line2}</div>` : ""}
               </div>
-              ${b1 ? `<div class="buttons"><div class="btn">${b1}</div></div>` : ""}
-            `;
-            break;
-          case "person":
-            innerHTML = `
-              <div class="person-card">
-                <div class="person-img"><img src="${imgSrc}" alt=""></div>
-                <div class="person-info">
-                  <div class="title">${title || "名前を入力"}</div>
-                  ${tag ? `<div class="tag">${tag}</div>` : ""}
-                  <div class="desc">${desc || ""}</div>
-                </div>
-              </div>
-              ${b1 ? `<div class="buttons"><div class="btn">${b1}</div></div>` : ""}
-            `;
-            break;
-          case "image":
-            innerHTML = `
-              <div class="image-only">
-                <img src="${imgSrc}" alt="">
+            </div>
+            ${b1 ? `<div class="buttons"><div class="btn">${b1}</div></div>` : ""}
+          `;
+        } else if (type === "person") {
+          innerHTML = `
+            <div class="person-card">
+              <div class="person-img"><img src="${imgSrc}" alt=""></div>
+              <div class="person-info">
+                <div class="title">${title || "名前を入力"}</div>
                 ${tag ? `<div class="tag">${tag}</div>` : ""}
-                ${b1 ? `<div class="img-btn">${b1}</div>` : ""}
-              </div>
-            `;
-            break;
-          default:
-            innerHTML = `
-              <img src="${imgSrc}" alt="">
-              <div class="sample-body">
-                ${tag ? `<div class="tag">${tag}</div>` : ""}
-                <div class="title">${title || "タイトルを入力"}</div>
                 <div class="desc">${desc || ""}</div>
-                ${price ? `<div class="price">¥${price}</div>` : ""}
               </div>
-              ${b1 ? `<div class="buttons"><div class="btn">${b1}</div></div>` : ""}
-            `;
+            </div>
+            ${b1 ? `<div class="buttons"><div class="btn">${b1}</div></div>` : ""}
+          `;
+        } else if (type === "image") {
+          innerHTML = `
+            <div class="image-only">
+              <img src="${imgSrc}" alt="">
+              ${tag ? `<div class="tag">${tag}</div>` : ""}
+              ${b1 ? `<div class="img-btn">${b1}</div>` : ""}
+            </div>
+          `;
+        } else {
+          innerHTML = `
+            <img src="${imgSrc}" alt="">
+            <div class="sample-body">
+              ${tag ? `<div class="tag">${tag}</div>` : ""}
+              <div class="title">${title || "タイトルを入力"}</div>
+              <div class="desc">${desc || ""}</div>
+              ${price ? `<div class="price">${price}</div>` : ""}
+            </div>
+            ${b1 ? `<div class="buttons"><div class="btn">${b1}</div></div>` : ""}
+          `;
         }
 
         cardEl.innerHTML = innerHTML;
@@ -1088,11 +1090,12 @@
       if (e.target.closest("#cardsWrap")) updateCardPreview();
     });
 
-    const originalRenderCards = renderCards;
-    renderCards = function () {
-      originalRenderCards();
-      setTimeout(updateCardPreview, 200);
-    };
+    // 初回ロード時：ホットスポット準備＆送信ボタン配置
+    window.addEventListener('load', () => {
+      initRichmenuHotspots();
+      wireInputFocusToHighlight();
+      mountLocalActionsToAll();
+    });
   </script>
 </body>
 </html>
