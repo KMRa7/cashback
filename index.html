@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>外部向け・問い合わせフォーム（送信のみ）</title>
+  <style>
+    :root{--bg:#f7f8f9;--panel:#ffffff;--border:#e0e4ea;--text:#222;--sub:#666;--accent:#06C755;--accent-light:#d6f5dd;}
+    html,body{margin:0;padding:0;background:var(--bg);font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif;color:var(--text);-webkit-text-size-adjust:100%;}
+    .container{max-width:640px;margin:0 auto;padding:20px 16px 60px;}
+    h1{font-size:20px;margin-bottom:12px;text-align:center;color:#111;}
+    .badge{display:inline-block;background:var(--accent-light);color:var(--accent);font-size:13px;padding:4px 10px;border-radius:999px;font-weight:600;margin:0 auto 20px;}
+    .section{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px 16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+    .section h3,.section h4{margin-top:0;font-size:16px;margin-bottom:12px;border-left:4px solid var(--accent);padding-left:8px;color:#111;}
+    label{font-weight:600;font-size:14px;color:#222;}
+    .req{color:#e54848;}
+    .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+    input[type="text"],input[type="number"],input[type="date"],input[type="url"],input[type="datetime-local"],textarea,select{width:100%;padding:12px 14px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#222;font-size:15px;box-sizing:border-box;}
+    textarea{min-height:100px;resize:vertical;}
+    .mini{font-size:12.5px;color:var(--sub);line-height:1.5;}
+    .buttons{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
+    button{font-size:16px;font-weight:600;border-radius:8px;padding:14px;cursor:pointer;border:none;transition:.2s ease;}
+    button.primary{background:var(--accent);color:#fff;}
+    button.primary:hover{background:#05b54e;}
+    /* カードUI / プレビュー風見た目は残す（自動表示） */
+    .sample-container{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;}
+    .sample-card{width:200px;border-radius:12px;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.08);overflow:hidden;border:1px solid #e0e0e0;font-size:13px;}
+    .sample-card img{width:100%;height:120px;object-fit:cover;}
+    .sample-card .sample-body{padding:8px 10px 12px;}
+    .sample-card .title{font-weight:600;margin:4px 0;color:#222;}
+    .sample-card .desc{color:#555;font-size:12px;line-height:1.4;}
+    .sample-card .tag{background:#555;color:#fff;font-size:11px;border-radius:6px;padding:2px 6px;display:inline-block;}
+    .sample-card .buttons{border-top:1px solid #eee;}
+    .sample-card .btn{text-align:center;color:#06c755;padding:6px;font-weight:600;cursor:pointer;}
+    .sample-card .price{text-align:right;color:#222;font-weight:600;}
+
+    .coupon-card-container{display:flex;flex-direction:column;gap:12px;margin-top:14px;}
+    .coupon-card{border:1px solid var(--border);background:#fff;border-radius:10px;padding:16px 18px;box-shadow:0 2px 6px rgba(0,0,0,.05);cursor:pointer;transition:.2s;}
+    .coupon-card.active{border-color:var(--accent);background:var(--accent-light);box-shadow:0 0 0 2px rgba(6,199,85,0.2);}
+    .coupon-settings{background:#fff;border-radius:12px;padding:18px 16px 22px;border:1px solid var(--border);margin-top:16px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+    .coupon-settings .grid{display:flex;flex-direction:column;gap:14px;}
+    .coupon-settings input,.coupon-settings textarea,.coupon-settings select{font-size:15px;padding:12px 14px;border-radius:8px;border:1px solid var(--border);background:#fdfdfd;}
+    .grid{display:flex;flex-direction:column;gap:10px;}
+    @media (min-width:720px){.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}}
+    .card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px;box-shadow:0 2px 6px rgba(0,0,0,.05);margin-bottom:10px;}
+    /* リッチメニュー */
+    .rm-map{position:relative;display:flex;justify-content:center;align-items:center;width:100%;margin:12px 0;}
+    .rm-map img{display:block;width:100%;max-width:320px;height:auto;border-radius:12px;border:1px solid var(--border);box-shadow:0 2px 6px rgba(0,0,0,0.08);object-fit:contain;pointer-events:none;}
+    .rm-hot{position:absolute;cursor:pointer;background:transparent;transition:background .2s;z-index:10;}
+    .rm-hot.active{background:rgba(6,199,85,0.25);border-radius:4px;}
+    .legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--sub);margin-top:8px;}
+    .legend .key::before{content:"■ ";color:var(--accent);}
+    .local-actions{position:sticky;bottom:-8px;background:#fff;padding:12px 0 4px;border-top:1px solid var(--border);display:flex;gap:10px;z-index:5;}
+    .local-actions .tip{margin-left:auto;font-size:12px;color:var(--sub);align-self:center;}
+    /* sec-card 内装飾 */
+    #sec-card .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px 16px 20px;box-shadow:0 2px 5px rgba(0,0,0,.05);margin-bottom:18px;}
+    #sec-card .subfields,#sec-card .two{background:#f9fafb;border-radius:8px;padding:10px 12px 12px;margin-top:10px;border:1px solid #e9edf3;}
+    #sec-card input[type="file"]{background:#fff;padding:10px;border-radius:6px;border:1px solid #ccc;}
+    #sec-card .two{display:flex;flex-direction:column;gap:12px;}
+    @media (min-width:720px){#sec-card .two{flex-direction:row;}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="kicker">
+      <h1>問い合わせフォーム（外部のお客様向け）</h1>
+      <span class="badge">送信のみ（プレビュー機能なし）</span>
+    </div>
+
+    <!-- ① 基本情報 -->
+    <div class="section">
+      <h3>① 基本情報</h3>
+      <div class="grid">
+        <div class="field">
+          <label>店舗名 / 企業名<span class="req">*</span></label>
+          <input id="storeName" type="text" placeholder="例）〇〇サロン" required>
+        </div>
+        <div class="field">
+          <label>大元カテゴリ<span class="req">*</span></label>
+          <select id="requestType" required>
+            <option value="">選択してください</option>
+            <option value="card">カードタイプメッセージ</option>
+            <option value="richmenu">リッチメニュー（6ボタン・デザイン修正）</option>
+            <option value="shopcard">ショップカード</option>
+            <option value="coupon">クーポン</option>
+            <option value="other">その他（自由記述）</option>
+          </select>
+          <div class="mini">※選択したカテゴリだけ下に表示されます</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ② カードタイプメッセージ -->
+    <div id="sec-card" class="section" style="display:none">
+      <h3>② カードタイプメッセージ（イメージ）</h3>
+
+      <!-- 入力に応じた見た目プレビュー（自動） -->
+      <div id="cardSampleWrap" style="margin-top:20px; display:none;">
+        <h4>カード見た目プレビュー</h4>
+        <div id="cardSampleContainer" class="sample-container"></div>
+      </div>
+
+      <div class="row" style="align-items:center; margin-bottom:10px">
+        <div class="field" style="max-width:280px">
+          <label>カードタイプ（全カードの初期値）<span class="req">*</span></label>
+          <select id="cardGlobalType">
+            <option value="image" selected>イメージ（写真＋キャプション）</option>
+            <option value="product">プロダクト（商品）</option>
+            <option value="location">ロケーション（店舗・会場）</option>
+            <option value="person">パーソン（人物）</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" style="align-items:center">
+        <div class="field" style="max-width:220px">
+          <label>作成枚数（1〜9）<span class="req">*</span></label>
+          <input id="cardCount" type="number" min="1" max="9" value="1">
+          <div class="mini">変更すると下のカードUIを再描画します</div>
+        </div>
+        <div class="mini">各カードは<b>画像1枚必須</b>／タグ（任意）／アクションボタン（任意）を設定できます</div>
+      </div>
+
+      <div id="cardsWrap" class="row" style="margin-top:8px; gap:14px; flex-direction:column"></div>
+    </div>
+
+    <!-- ③ リッチメニュー -->
+    <div id="sec-richmenu" class="section" style="display:none">
+      <h3>③ リッチメニュー</h3>
+      <div class="field" style="margin-bottom:12px">
+        <label>リッチメニューの配置図（タップ/クリックで該当ボタンへジャンプ）</label>
+        <div class="rm-map" id="rmMapWrap">
+          <img id="rmMapImg" src="https://www.dropbox.com/scl/fi/ob83wfx3fuy08m1f67vt3/1.jpg?rlkey=72kytf83rd7bhq1l09nds6gc3&st=njv25e3r&dl=1" alt="リッチメニュー配置図 A〜F（3x2）">
+        </div>
+        <div class="legend">
+          <span class="key">A → ボタン1</span><span class="key">B → ボタン2</span><span class="key">C → ボタン3</span>
+          <span class="key">D → ボタン4</span><span class="key">E → ボタン5</span><span class="key">F → ボタン6</span>
+        </div>
+      </div>
+
+      <div class="mini" style="margin:6px 0 10px">各ボタンは「ボタン名」と「遷移先」の両方を入れると有効になります（片方のみ入力はエラー）。</div>
+
+      <div id="rmButtons" class="row" style="flex-direction:column; gap:12px">
+        <!-- 1〜6（省略せずそのまま） -->
+        <div class="card" id="rmBtn1">
+          <div class="mini" style="margin-bottom:6px">ボタン1</div>
+          <div class="two">
+            <div class="field"><label>ボタン名（15文字）</label><input id="rmBtn1Label" maxlength="15" type="text" placeholder="例）予約する"></div>
+            <div class="field">
+              <label>遷移先タイプ</label>
+              <select id="rmBtn1Type">
+                <option value="">選択してください</option>
+                <option value="link">URL</option>
+                <option value="coupon">クーポン</option>
+                <option value="shopcard">ショップカード</option>
+                <option value="text">テキスト</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label>遷移先内容</label><input id="rmBtn1Value" type="text" placeholder="https:// または 名称/テキスト"></div>
+        </div>
+
+        <div class="card" id="rmBtn2">
+          <div class="mini" style="margin-bottom:6px">ボタン2</div>
+          <div class="two">
+            <div class="field"><label>ボタン名（15文字）</label><input id="rmBtn2Label" maxlength="15" type="text"></div>
+            <div class="field">
+              <label>遷移先タイプ</label>
+              <select id="rmBtn2Type">
+                <option value="">選択してください</option>
+                <option value="link">URL</option>
+                <option value="coupon">クーポン</option>
+                <option value="shopcard">ショップカード</option>
+                <option value="text">テキスト</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label>遷移先内容</label><input id="rmBtn2Value" type="text"></div>
+        </div>
+
+        <div class="card" id="rmBtn3">
+          <div class="mini" style="margin-bottom:6px">ボタン3</div>
+          <div class="two">
+            <div class="field"><label>ボタン名（15文字）</label><input id="rmBtn3Label" maxlength="15" type="text"></div>
+            <div class="field">
+              <label>遷移先タイプ</label>
+              <select id="rmBtn3Type">
+                <option value="">選択してください</option>
+                <option value="link">URL</option>
+                <option value="coupon">クーポン</option>
+                <option value="shopcard">ショップカード</option>
+                <option value="text">テキスト</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label>遷移先内容</label><input id="rmBtn3Value" type="text"></div>
+        </div>
+
+        <div class="card" id="rmBtn4">
+          <div class="mini" style="margin-bottom:6px">ボタン4</div>
+          <div class="two">
+            <div class="field"><label>ボタン名（15文字）</label><input id="rmBtn4Label" maxlength="15" type="text"></div>
+            <div class="field">
+              <label>遷移先タイプ</label>
+              <select id="rmBtn4Type">
+                <option value="">選択してください</option>
+                <option value="link">URL</option>
+                <option value="coupon">クーポン</option>
+                <option value="shopcard">ショップカード</option>
+                <option value="text">テキスト</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label>遷移先内容</label><input id="rmBtn4Value" type="text"></div>
+        </div>
+
+        <div class="card" id="rmBtn5">
+          <div class="mini" style="margin-bottom:6px">ボタン5</div>
+          <div class="two">
+            <div class="field"><label>ボタン名（15文字）</label><input id="rmBtn5Label" maxlength="15" type="text"></div>
+            <div class="field">
+              <label>遷移先タイプ</label>
+              <select id="rmBtn5Type">
+                <option value="">選択してください</option>
+                <option value="link">URL</option>
+                <option value="coupon">クーポン</option>
+                <option value="shopcard">ショップカード</option>
+                <option value="text">テキスト</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label>遷移先内容</label><input id="rmBtn5Value" type="text"></div>
+        </div>
+
+        <div class="card" id="rmBtn6">
+          <div class="mini" style="margin-bottom:6px">ボタン6</div>
+          <div class="two">
+            <div class="field"><label>ボタン名（15文字）</label><input id="rmBtn6Label" maxlength="15" type="text"></div>
+            <div class="field">
+              <label>遷移先タイプ</label>
+              <select id="rmBtn6Type">
+                <option value="">選択してください</option>
+                <option value="link">URL</option>
+                <option value="coupon">クーポン</option>
+                <option value="shopcard">ショップカード</option>
+                <option value="text">テキスト</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label>遷移先内容</label><input id="rmBtn6Value" type="text"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ④ ショップカード -->
+    <div id="sec-shopcard" class="section" style="display:none">
+      <h3>④ ショップカード</h3>
+      <div class="grid">
+        <div class="field"><label>カード名</label><input id="scName" type="text"></div>
+        <div class="field">
+          <label>テーマカラー<span class="req">*</span></label>
+          <input id="scColor" type="hidden" value="#5a5aff">
+          <div class="color-samples" id="colorSamples">
+            <div class="color-box" data-color="#ff3b30" style="--c:#ff3b30">RED<br><span>#ff3b30</span></div>
+            <div class="color-box" data-color="#34c759" style="--c:#34c759">GREEN<br><span>#34c759</span></div>
+            <div class="color-box" data-color="#5a5aff" style="--c:#5a5aff">BLUE<br><span>#5a5aff</span></div>
+            <div class="color-box" data-color="#6a0dad" style="--c:#6a0dad">PURPLE<br><span>#6a0dad</span></div>
+            <div class="color-box" data-color="#000000" style="--c:#000000">BLACK<br><span>#000000</span></div>
+            <div class="color-box" data-color="#ffffff" style="--c:#ffffff;color:#000">WHITE<br><span>#ffffff</span></div>
+          </div>
+          <div class="mini">クリックで選択</div>
+        </div>
+        <div class="field"><label>ゴールまでのポイント数</label><input id="scGoalPoints" type="number" min="1" max="100" value="10"></div>
+        <div class="field"><label>ゴール特典名</label><input id="scGoalReward" type="text"></div>
+        <div class="field"><label>チェックポイント</label><input id="scCheckpoint" type="text"></div>
+        <div class="field"><label>チェックポイント特典</label><input id="scCheckpointReward" type="text"></div>
+      </div>
+
+      <div class="section" style="margin-top:18px">
+        <h4>ポイント取得制限</h4>
+        <div class="field">
+          <label><input type="radio" name="scLimit" value="sameDay" checked> 同日中の重複付与を禁止（0:00にリセット）</label><br>
+          <label><input type="radio" name="scLimit" value="hours"> 指定時間内の重複付与を禁止：</label>
+          <select id="scLimitHours" style="margin-left:8px;">
+            <option value="1">1時間</option><option value="3">3時間</option><option value="6">6時間</option><option value="12">12時間</option>
+          </select><br>
+          <label><input type="radio" name="scLimit" value="none"> 制限しない</label>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:16px;">
+        <label>利用ガイド</label>
+        <textarea id="scGuide" placeholder="- 来店1回ごとに1ポイント付与されます。"></textarea>
+      </div>
+
+      <div class="section" style="margin-top:18px">
+        <h4>カード有効期限</h4>
+        <div class="field">
+          <div class="expire-options">
+            <label><input type="radio" name="scExpireType" value="lastUse" checked> 最終利用日から</label>
+            <input id="scExpireLastYear" type="number" min="0" value="1"> 年
+            <input id="scExpireLastMonth" type="number" min="0" value="0"> ヶ月
+          </div>
+          <div class="expire-options">
+            <label><input type="radio" name="scExpireType" value="firstUse"> 初回利用日から</label>
+            <input id="scExpireFirstYear" type="number" min="0" value="1"> 年
+            <input id="scExpireFirstMonth" type="number" min="0" value="0"> ヶ月
+          </div>
+          <div class="expire-options">
+            <label><input type="radio" name="scExpireType" value="none"> 設定しない</label>
+          </div>
+        </div>
+
+        <div class="section" style="margin-top:18px">
+          <h4>有効期限の通知</h4>
+          <div class="field">
+            <label><input type="radio" name="scNotice" value="1day" checked> 前日</label><br>
+            <label><input type="radio" name="scNotice" value="3days"> 3日前</label><br>
+            <label><input type="radio" name="scNotice" value="1week"> 1週間前</label><br>
+            <label><input type="radio" name="scNotice" value="none"> 通知しない</label>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:16px;">
+          <label>カード取得ボーナス</label>
+          <input id="scBonus" type="number" min="0" value="0"> ポイント
+        </div>
+
+        <div class="field" style="margin-top:16px;">
+          <label>カード画像（任意）</label><input id="scImage" type="file" accept="image/*">
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑤ クーポン -->
+    <div id="sec-coupon" class="section" style="display:none">
+      <h3>⑤ クーポン</h3>
+      <div class="section" style="margin-top:18px">
+        <h4>クーポン獲得条件</h4>
+        <div class="coupon-card-container">
+          <div class="coupon-card active" data-type="none"><h5>🎁 条件なし</h5><p>すべてのユーザーが獲得可能</p></div>
+          <div class="coupon-card" data-type="lottery"><h5>🎯 抽選</h5><p>当選者のみ獲得可能</p></div>
+          <div class="coupon-card" data-type="referral"><h5>🤝 友だち紹介</h5><p>紹介した人・された人が対象</p></div>
+        </div>
+
+        <input type="hidden" id="cpAcquireType" value="none">
+
+        <!-- 条件なし -->
+        <div id="cp-none-settings" class="coupon-settings" style="display:block;">
+          <div class="grid">
+            <div class="field"><label>クーポン名（60文字）</label><input id="cpNoneName" maxlength="60" type="text"></div>
+            <div class="field"><label>クーポン内容</label><input id="cpNoneContent" type="text" placeholder="例：500円引き／○○プレゼントなど"></div>
+            <div class="field"><label>有効期間</label><input id="cpNoneStart" type="datetime-local"> ～ <input id="cpNoneEnd" type="datetime-local"></div>
+            <div class="field">
+              <label>利用ガイド</label>
+              <textarea id="cpNoneGuide">- クーポンを使用するには、この画面をスタッフに提示してください。</textarea>
+            </div>
+            <div class="field"><label>使用用途</label><input id="cpNoneUse" type="text"></div>
+            <div class="field">
+              <label>使用可能回数</label>
+              <select id="cpNoneLimit">
+                <option value="once">1回のみ</option>
+                <option value="unlimited">上限なし</option>
+              </select>
+            </div>
+            <div class="field"><label>（任意）利用条件</label><input id="cpNoneCondition" type="text"></div>
+          </div>
+        </div>
+
+        <!-- 抽選 -->
+        <div id="cp-lottery-settings" class="coupon-settings" style="display:none;">
+          <div class="grid">
+            <div class="field"><label>クーポン名（60文字）</label><input id="cpLotteryName" maxlength="60" type="text"></div>
+            <div class="field"><label>クーポン内容</label><input id="cpLotteryContent" type="text"></div>
+            <div class="field"><label>有効期間</label><input id="cpLotteryStart" type="datetime-local"> ～ <input id="cpLotteryEnd" type="datetime-local"></div>
+            <div class="field"><label>利用ガイド</label><textarea id="cpLotteryGuide">- クーポン提示でご利用ください。</textarea></div>
+            <div class="field"><label>当選確率（1～99%）</label><input id="cpLotteryRate" type="number" min="1" max="99" value="50"></div>
+            <div class="field"><label>当選者数の上限</label><input id="cpLotteryMax" type="number" min="1" placeholder="例：100"></div>
+            <div class="field"><label>使用用途</label><input id="cpLotteryUse" type="text"></div>
+            <div class="field"><label>使用可能回数</label>
+              <select id="cpLotteryLimit"><option value="once">1回のみ</option><option value="unlimited">上限なし</option></select>
+            </div>
+            <div class="field"><label>（任意）利用条件</label><input id="cpLotteryCondition" type="text"></div>
+          </div>
+        </div>
+
+        <!-- 友だち紹介 -->
+        <div id="cp-referral-settings" class="coupon-settings" style="display:none;">
+          <div class="grid">
+            <div class="field"><label>クーポン名（60文字）</label><input id="cpReferralName" maxlength="60" type="text"></div>
+            <div class="field"><label>紹介期間</label><input id="cpReferralStart" type="datetime-local"> ～ <input id="cpReferralEnd" type="datetime-local"></div>
+            <div class="field"><label>注意事項</label><textarea id="cpReferralNote">- 予告なく変更または終了する場合があります。</textarea></div>
+            <div class="field">
+              <label>クーポン獲得日からの有効期間</label>
+              <select id="cpReferralValidType"><option value="7">7日間</option><option value="30">30日間</option><option value="custom">カスタム設定</option></select>
+              <input id="cpReferralCustomDays" type="number" min="1" max="180" placeholder="1～180日間" style="display:none;margin-top:6px;">
+            </div>
+            <div class="field"><label>クーポン内容</label><input id="cpReferralContent" type="text"></div>
+            <div class="field"><label>利用ガイド</label><textarea id="cpReferralGuide">- クーポン提示でご利用ください。</textarea></div>
+            <div class="field"><label>使用用途</label><input id="cpReferralUse" type="text"></div>
+            <div class="field">
+              <label>獲得可能回数</label>
+              <select id="cpReferralCountType"><option value="unlimited">上限なし</option><option value="custom">カスタム設定</option></select>
+              <input id="cpReferralCountCustom" type="number" min="1" max="30" placeholder="1～30回" style="display:none;margin-top:6px;">
+            </div>
+            <div class="field"><label>（任意）利用条件</label><input id="cpReferralCondition" type="text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑥ その他（自由記述） -->
+    <div id="sec-other" class="section" style="display:none">
+      <h3>⑥ その他</h3>
+      <div class="field">
+        <label>自由記述</label>
+        <textarea id="otherText" placeholder="ご希望や補足事項を自由にお書きください"></textarea>
+      </div>
+      <div class="field">
+        <label>画像（任意・複数可）</label>
+        <input id="otherImages" type="file" multiple accept="image/*">
+      </div>
+      <div class="buttons">
+        <button class="primary" type="button" id="btnSubmitOther">この自由記述を送信</button>
+        <span class="mini">※上のカテゴリ選択で「その他（自由記述）」を選んだ状態で送信します。</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzlAVJqiRJ_sAZRLS-qFeDSBaJLr2G4LyrY6QG2zX5OwDW6Vrux32FGQVTfAuRJ_kXGLg/exec";
+    const $ = s => document.querySelector(s);
+    const on = (el, evt, fn) => el && el.addEventListener(evt, fn);
+    const show = (el, v = true) => el.style.display = v ? '' : 'none';
+
+    // セクション管理
+    const sections = {
+      card: $('#sec-card'),
+      richmenu: $('#sec-richmenu'),
+      shopcard: $('#sec-shopcard'),
+      coupon: $('#sec-coupon'),
+      other: $('#sec-other')
+    };
+
+    on($('#requestType'), 'change', () => {
+      Object.values(sections).forEach(s => show(s, false));
+      const v = $('#requestType').value;
+      if (!v) return;
+      show(sections[v], true);
+      if (v === 'card') renderCards();
+      ensureLocalActions(sections[v]);
+    });
+
+    // ---- カードUI生成（省略なし） ----
+    function renderCards() {
+      const wrap = $('#cardsWrap');
+      const cntEl = $('#cardCount');
+      const n = Math.max(1, Math.min(9, parseInt(cntEl?.value || '1')));
+      if (cntEl) cntEl.value = String(n);
+      wrap.innerHTML = '';
+      const globalType = ($('#cardGlobalType')?.value || 'image');
+
+      const buildSubfields = (t) => {
+        if (t === 'product') {
+          return `
+            <div class="row" style="gap:12px; align-items:flex-end; flex-wrap:wrap">
+              <div class="field" style="min-width:240px;">
+                <label>画像（必須・1枚まで）<span class="req">*</span></label>
+                <input type="file" class="cd-image" accept="image/*" required>
+              </div>
+              <div class="field" style="min-width:200px; flex:1">
+                <label>タグ（任意・最大12文字）</label>
+                <input type="text" class="pd-tag" maxlength="12" placeholder="例）新着 / 人気">
+              </div>
+            </div>
+
+            <div class="subfields active">
+              <div class="grid">
+                <div class="field">
+                  <label>カードタイトル（20文字必須）<span class="req">*</span></label>
+                  <input type="text" class="pd-title" maxlength="20" placeholder="例）おまかせコース60分" required>
+                </div>
+                <div class="field">
+                  <label>価格（15文字・円/\\ 可）</label>
+                  <input type="text" class="pd-priceText" maxlength="15" placeholder="例）5,980円 / \\5980">
+                </div>
+                <div class="field" style="grid-column:1/-1">
+                  <label>説明文（60文字任意）</label>
+                  <textarea class="pd-desc" maxlength="60" placeholder="例）状態に合わせて最適に施術します。"></textarea>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+        if (t === 'location') {
+          return `
+            <div class="row" style="gap:12px; align-items:flex-end; flex-wrap:wrap">
+              <div class="field" style="min-width:240px;">
+                <label>画像（必須・1枚まで）<span class="req">*</span></label>
+                <input type="file" class="cd-image" accept="image/*" required>
+              </div>
+              <div class="field" style="min-width:200px; flex:1">
+                <label>タグ（任意・最大12文字）</label>
+                <input type="text" class="lc-tag" maxlength="12" placeholder="例）本店 / 新装開店">
+              </div>
+            </div>
+
+            <div class="subfields active">
+              <div class="grid">
+                <div class="field">
+                  <label>カードタイトル（20文字必須）<span class="req">*</span></label>
+                  <input type="text" class="lc-title" maxlength="20" placeholder="例）店舗名など" required>
+                </div>
+                <div class="field" style="grid-column:1/-1">
+                  <label>住所（60文字任意）</label>
+                  <input type="text" class="lc-address" maxlength="60">
+                </div>
+                <div class="field">
+                  <label>時間（30文字 任意）</label>
+                  <input type="text" class="lc-hours" maxlength="30">
+                </div>
+                <div class="field">
+                  <label>価格（15文字 任意・円/\\ 可）</label>
+                  <input type="text" class="lc-priceText" maxlength="15">
+                </div>
+              </div>
+              <div class="mini">※「時間」または「価格」のどちらか一方でもOK</div>
+            </div>
+          `;
+        }
+        if (t === 'person') {
+          return `
+            <div class="row" style="gap:12px; align-items:flex-end; flex-wrap:wrap">
+              <div class="field" style="min-width:240px;">
+                <label>画像（必須・1枚まで）<span class="req">*</span></label>
+                <input type="file" class="cd-image" accept="image/*" required>
+              </div>
+            </div>
+
+            <div class="subfields active">
+              <div class="grid">
+                <div class="field">
+                  <label>名前（20文字必須）<span class="req">*</span></label>
+                  <input type="text" class="ps-name" maxlength="20" required>
+                </div>
+                <div class="field"><label>タグ1（任意）</label><input type="text" class="ps-tag1" maxlength="12"></div>
+                <div class="field"><label>タグ2（任意）</label><input type="text" class="ps-tag2" maxlength="12"></div>
+                <div class="field"><label>タグ3（任意）</label><input type="text" class="ps-tag3" maxlength="12"></div>
+                <div class="field" style="grid-column:1/-1">
+                  <label>説明文（60文字任意）</label>
+                  <textarea class="ps-desc" maxlength="60"></textarea>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+        return `
+          <div class="row" style="gap:12px; align-items:flex-end; flex-wrap:wrap">
+            <div class="field" style="min-width:240px;">
+              <label>画像（必須・1枚まで）<span class="req">*</span></label>
+              <input type="file" class="cd-image" accept="image/*" required>
+            </div>
+            <div class="field" style="min-width:200px; flex:1">
+              <label>タグ（任意・最大12文字）</label>
+              <input type="text" class="img-tag" maxlength="12" placeholder="例）期間限定">
+            </div>
+          </div>
+        `;
+      };
+
+      const buildActions = (t) => {
+        if (t === 'image') {
+          return `
+            <div class="two" style="margin-top:10px">
+              <div class="field">
+                <label>アクションボタン1（任意・ボタン名15文字）</label>
+                <input type="text" class="btn1-label" maxlength="15" placeholder="例）予約する / 詳細を見る">
+              </div>
+              <div class="field">
+                <label>遷移先1（URL / クーポン / ショップカード / テキスト）</label>
+                <input type="text" class="btn1-dest" placeholder="https:// または 名称/テキスト">
+              </div>
+            </div>
+          `;
+        }
+        return `
+          <div class="two" style="margin-top:10px">
+            <div class="field">
+              <label>アクションボタン1（任意・ボタン名15文字）</label>
+              <input type="text" class="btn1-label" maxlength="15" placeholder="例）予約する / 詳細を見る">
+            </div>
+            <div class="field">
+              <label>遷移先1（URL / クーポン / ショップカード / テキスト）</label>
+              <input type="text" class="btn1-dest" placeholder="https:// または 名称/テキスト">
+            </div>
+          </div>
+          <div class="two" style="margin-top:10px">
+            <div class="field">
+              <label>アクションボタン2（任意・ボタン名15文字）</label>
+              <input type="text" class="btn2-label" maxlength="15" placeholder="例）空席確認 / 電話する">
+            </div>
+            <div class="field">
+              <label>遷移先2（URL / クーポン / ショップカード / テキスト）</label>
+              <input type="text" class="btn2-dest" placeholder="https:// または 名称/テキスト">
+            </div>
+          </div>
+        `;
+      };
+
+      for (let i = 0; i < n; i++) {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.index = String(i);
+        card.dataset.type = globalType;
+        card.innerHTML = `${buildSubfields(globalType)}${buildActions(globalType)}`;
+        wrap.appendChild(card);
+      }
+    }
+
+    on($('#cardCount'), 'input', renderCards);
+    on($('#cardGlobalType'), 'change', renderCards);
+
+    // Base64 添付
+    const appendFilesBase64 = async (fd, selector, namePrefix) => {
+      const elems = Array.from(document.querySelectorAll(selector));
+      let inputs = [];
+      if (elems.length === 0) {
+        const el = document.querySelector(selector);
+        if (el) elems.push(el);
+      }
+      elems.forEach(el => {
+        if (el.tagName === 'INPUT' && el.type === 'file') inputs.push(el);
+        else inputs.push(...el.querySelectorAll('input[type="file"]'));
+      });
+      const readers = [];
+      let idx = 0;
+      inputs.forEach(input => {
+        Array.from(input.files || []).forEach(file => {
+          readers.push(new Promise((resolve, reject) => {
+            const fr = new FileReader();
+            fr.onload = () => { fd.append('b64_' + namePrefix + '_' + (idx++), String(fr.result)); resolve(); };
+            fr.onerror = reject;
+            fr.readAsDataURL(file);
+          }));
+        });
+      });
+      await Promise.all(readers);
+    };
+
+    function collectData() {
+      const base = {
+        storeName: $('#storeName').value.trim(),
+        requestType: $('#requestType').value,
+        createdAt: new Date().toISOString(),
+      };
+
+      const detail = {};
+
+      if (base.requestType === 'card') {
+        const cardType = ($('#cardGlobalType')?.value || 'image');
+        const cards = [];
+        const nodes = document.querySelectorAll('#cardsWrap .card');
+
+        nodes.forEach((c, idx) => {
+          let meta = {};
+          let tag = '';
+
+          if (cardType === 'product') {
+            tag = (c.querySelector('.pd-tag')?.value || '').trim();
+            meta = {
+              title: (c.querySelector('.pd-title')?.value || '').trim(),
+              desc: (c.querySelector('.pd-desc')?.value || '').trim(),
+              priceText: (c.querySelector('.pd-priceText')?.value || '').trim()
+            };
+          } else if (cardType === 'location') {
+            tag = (c.querySelector('.lc-tag')?.value || '').trim();
+            meta = {
+              title: (c.querySelector('.lc-title')?.value || '').trim(),
+              address: (c.querySelector('.lc-address')?.value || '').trim(),
+              hours: (c.querySelector('.lc-hours')?.value || '').trim(),
+              priceText: (c.querySelector('.lc-priceText')?.value || '').trim()
+            };
+          } else if (cardType === 'person') {
+            meta = {
+              name: (c.querySelector('.ps-name')?.value || '').trim(),
+              tags: [
+                (c.querySelector('.ps-tag1')?.value || '').trim(),
+                (c.querySelector('.ps-tag2')?.value || '').trim(),
+                (c.querySelector('.ps-tag3')?.value || '').trim()
+              ].filter(Boolean),
+              desc: (c.querySelector('.ps-desc')?.value || '').trim()
+            };
+          } else {
+            tag = (c.querySelector('.img-tag')?.value || '').trim();
+            meta = {};
+          }
+
+          const actions = [];
+          const b1 = { label: (c.querySelector('.btn1-label')?.value || '').trim(), dest: (c.querySelector('.btn1-dest')?.value || '').trim() };
+          if (cardType === 'image') {
+            if (b1.label && b1.dest) actions.push({ label: b1.label, destination: b1.dest });
+          } else {
+            const b2 = { label: (c.querySelector('.btn2-label')?.value || '').trim(), dest: (c.querySelector('.btn2-dest')?.value || '').trim() };
+            if (b1.label && b1.dest) actions.push({ label: b1.label, destination: b1.dest });
+            if (b2.label && b2.dest) actions.push({ label: b2.label, destination: b2.dest });
+          }
+
+          cards.push({ index: idx + 1, type: cardType, image: 'attached_as_b64_cardImage_' + idx, tag, meta, actions });
+        });
+
+        detail.cards = cards;
+      }
+
+      if (base.requestType === 'other') {
+        const files = Array.from($('#otherImages')?.files || []);
+        detail.other = {
+          text: ($('#otherText')?.value || '').trim(),
+          imagesMeta: files.map(f => ({ name: f.name, size: f.size, type: f.type }))
+        };
+      }
+
+      return { base, detail };
+    }
+
+    // 送信のみ
+    async function submitForm() {
+      const { base, detail } = collectData();
+
+      // 必須
+      if (!base.storeName || !base.requestType) {
+        alert('店舗名 と 大元カテゴリ は必須です');
+        return;
+      }
+
+      // カード時のチェック
+      if (base.requestType === 'card') {
+        const cards = document.querySelectorAll('#cardsWrap .card');
+        if (cards.length === 0) { alert('カード枚数を1〜9で指定してください'); return; }
+        if (cards.length > 9) { alert('カードは最大9枚までです'); return; }
+
+        const cardType = ($('#cardGlobalType')?.value || 'image');
+
+        for (let i = 0; i < cards.length; i++) {
+          const card = cards[i];
+
+          const img = card.querySelector('.cd-image');
+          const files = img?.files || [];
+          if (!files.length) { alert(`カード${i + 1}: 画像を1枚選択してください`); return; }
+          if (files.length > 1) { alert(`カード${i + 1}: 画像は1枚のみ選択してください`); return; }
+
+          if (cardType === 'product') {
+            const title = card.querySelector('.pd-title')?.value.trim();
+            if (!title) { alert(`カード${i + 1}: カードタイトル（商品）は必須です`); return; }
+          } else if (cardType === 'location') {
+            const title = card.querySelector('.lc-title')?.value.trim();
+            const hours = card.querySelector('.lc-hours')?.value.trim();
+            const priceText = card.querySelector('.lc-priceText')?.value.trim();
+            if (!title) { alert(`カード${i + 1}: カードタイトル（ロケーション）は必須です`); return; }
+            if (hours && priceText) { alert(`カード${i + 1}: 「時間」と「価格」はどちらか一方のみ入力してください`); return; }
+          } else if (cardType === 'person') {
+            const name = card.querySelector('.ps-name')?.value.trim();
+            if (!name) { alert(`カード${i + 1}: 名前（人物）は必須です`); return; }
+          }
+
+          const btn1 = { label: (card.querySelector('.btn1-label')?.value || '').trim(), dest: (card.querySelector('.btn1-dest')?.value || '').trim() };
+          const btns = (cardType === 'image')
+            ? [btn1]
+            : [ btn1, { label: (card.querySelector('.btn2-label')?.value || '').trim(), dest: (card.querySelector('.btn2-dest')?.value || '').trim() } ];
+
+          for (let j = 0; j < btns.length; j++) {
+            const b = btns[j];
+            const any = !!(b.label || b.dest);
+            if (any && (!b.label || !b.dest)) { alert(`カード${i + 1}: アクションボタン${j + 1}は「ボタン名」と「遷移先」を両方入力してください`); return; }
+            if (b.dest && /^https?:\/\//i.test(b.dest) === false && b.dest.includes('http')) {
+              alert(`カード${i + 1}: アクションボタン${j + 1}の遷移先がURLらしいですが http(s):// から始めてください`);
+              return;
+            }
+          }
+        }
+      }
+
+      // その他
+      if (base.requestType === 'other') {
+        if (!detail.other?.text && (!$('#otherImages') || !$('#otherImages').files.length)) {
+          alert('自由記述または画像のどちらかを入力してください');
+          return;
+        }
+      }
+
+      // 送信
+      const fd = new FormData();
+      fd.append('payload', JSON.stringify({ base, detail }));
+
+      await appendFilesBase64(fd, '#cardsWrap', 'cardImage');
+      await appendFilesBase64(fd, '#scImage', 'scImage');
+      await appendFilesBase64(fd, '#otherImages', 'othImage');
+
+      try {
+        const res = await fetch(GAS_URL, { method: 'POST', body: fd });
+        const txt = await res.text();
+        let data; try { data = JSON.parse(txt); } catch { data = { raw: txt }; }
+        console.log('送信結果:', data);
+        alert('送信しました。問題なければこのまま画面を閉じてOKです。');
+      } catch (err) {
+        alert('送信エラー: ' + err.message);
+      }
+    }
+
+    // 「その他」専用送信
+    on($('#btnSubmitOther'), 'click', () => {
+      const sel = $('#requestType');
+      if (sel && sel.value !== 'other') sel.value = 'other';
+      Object.values(sections).forEach(s => show(s, false));
+      show(sections.other, true);
+      submitForm();
+    });
+
+    // カラー選択
+    document.addEventListener('DOMContentLoaded', () => {
+      const boxes = document.querySelectorAll('#colorSamples .color-box');
+      const hidden = document.getElementById('scColor');
+      boxes.forEach(box => {
+        box.addEventListener('click', () => {
+          boxes.forEach(b => b.classList.remove('selected'));
+          box.classList.add('selected');
+          hidden.value = box.dataset.color;
+        });
+      });
+    });
+
+    // クーポンカード切替
+    document.querySelectorAll('.coupon-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.coupon-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        const type = card.dataset.type;
+        document.getElementById('cpAcquireType').value = type;
+        document.querySelectorAll('.coupon-settings').forEach(s => s.style.display = 'none');
+        document.getElementById(`cp-${type}-settings`).style.display = 'block';
+      });
+    });
+
+    // 友だち紹介カスタム
+    const referralValidSelect = document.getElementById('cpReferralValidType');
+    const referralCustomDays = document.getElementById('cpReferralCustomDays');
+    if (referralValidSelect) referralValidSelect.addEventListener('change', () => {
+      referralCustomDays.style.display = referralValidSelect.value === 'custom' ? 'block' : 'none';
+    });
+    const referralCountType = document.getElementById('cpReferralCountType');
+    const referralCountCustom = document.getElementById('cpReferralCountCustom');
+    if (referralCountType) referralCountType.addEventListener('change', () => {
+      referralCountCustom.style.display = referralCountType.value === 'custom' ? 'block' : 'none';
+    });
+
+    // リッチメニュー：ホットスポット
+    function initRichmenuHotspots() {
+      const wrap = document.getElementById('rmMapWrap');
+      const img = document.getElementById('rmMapImg');
+      if (!wrap || !img) return;
+
+      const grid = [
+        { area: 'A', btn: 1, col: 0, row: 0 },
+        { area: 'B', btn: 2, col: 1, row: 0 },
+        { area: 'C', btn: 3, col: 2, row: 0 },
+        { area: 'D', btn: 4, col: 0, row: 1 },
+        { area: 'E', btn: 5, col: 1, row: 1 },
+        { area: 'F', btn: 6, col: 2, row: 1 },
+      ];
+
+      const renderHotspots = () => {
+        const imgW = img.offsetWidth;
+        const imgH = img.offsetHeight;
+        if (!imgW || !imgH) return;
+
+        const cellW = imgW / 3;
+        const cellH = imgH / 2;
+
+        wrap.querySelectorAll('.rm-hot').forEach(el => el.remove());
+
+        grid.forEach(g => {
+          const d = document.createElement('div');
+          d.className = 'rm-hot';
+          d.dataset.btn = g.btn;
+          Object.assign(d.style, { left: `${g.col * cellW}px`, top: `${g.row * cellH}px`, width: `${cellW}px`, height: `${cellH}px`, position: "absolute", zIndex: 20 });
+          d.addEventListener('click', () => highlightAndScroll(g.btn));
+          wrap.appendChild(d);
+        });
+      };
+
+      if (img.complete && img.naturalWidth > 0) renderHotspots();
+      else img.addEventListener('load', renderHotspots);
+      window.addEventListener('resize', renderHotspots);
+      window.addEventListener('scroll', renderHotspots);
+    }
+
+    function highlightAndScroll(btnIndex) {
+      const card = document.getElementById('rmBtn' + btnIndex);
+      const hotspot = document.querySelector(`.rm-hot[data-btn="${btnIndex}"]`);
+      if (!card || !hotspot) return;
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      hotspot.classList.add('active');
+      setTimeout(() => hotspot.classList.remove('active'), 1200);
+    }
+
+    window.addEventListener('load', () => {
+      initRichmenuHotspots();
+      wireInputFocusToHighlight();
+      mountLocalActionsToAll(); // 最初から各セクションに「送信」だけ出す
+    });
+
+    function wireInputFocusToHighlight() {
+      for (let i = 1; i <= 6; i++) {
+        const card = document.getElementById('rmBtn' + i);
+        if (!card) continue;
+        card.querySelectorAll('input,select,textarea').forEach(el => {
+          el.addEventListener('focus', () => {});
+          el.addEventListener('blur', () => {});
+        });
+      }
+    }
+
+    // 各カテゴリのローカル操作（送信のみ）※「その他」は専用ボタンあり
+    function ensureLocalActions(sectionEl) {
+      if (!sectionEl || sectionEl.querySelector('.local-actions')) return;
+      if (sectionEl.id === 'sec-other') return;
+      const actions = document.createElement('div');
+      actions.className = 'local-actions';
+      actions.innerHTML = `
+        <button type="button" class="primary btnSubmitLocal">この内容で送信</button>
+        <span class="tip">※上部の必須項目もご確認ください</span>
+      `;
+      sectionEl.appendChild(actions);
+      actions.querySelector('.btnSubmitLocal').addEventListener('click', submitForm);
+    }
+    function mountLocalActionsToAll() {
+      Object.values(sections).forEach(sec => ensureLocalActions(sec));
+    }
+
+    // カード見た目プレビュー（自動反映）
+    function updateCardPreview() {
+      const wrap = document.querySelector("#cardSampleContainer");
+      const cards = document.querySelectorAll("#cardsWrap .card");
+      wrap.innerHTML = "";
+      if (!cards.length) {
+        document.querySelector("#cardSampleWrap").style.display = "none";
+        return;
+      }
+      document.querySelector("#cardSampleWrap").style.display = "";
+
+      cards.forEach((card, idx) => {
+        const type = card.dataset.type || "product";
+        const tag = card.querySelector(".img-tag, .pd-tag, .lc-tag")?.value?.trim() || "";
+        const title = card.querySelector(".pd-title, .lc-title, .ps-name")?.value?.trim() || "";
+        const desc = card.querySelector(".pd-desc, .lc-address, .ps-desc, .lc-additional")?.value?.trim() || "";
+        const price = card.querySelector(".pd-price")?.value?.trim() || "";
+        const b1 = card.querySelector(".btn1-label")?.value?.trim() || "";
+
+        let imgSrc = "data:image/svg+xml;base64," + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240"><rect width="400" height="240" fill="#eaeaea"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="20" fill="#999">No Image</text></svg>');
+
+        const cardEl = document.createElement("div");
+        cardEl.className = "sample-card";
+        cardEl.id = `sampleCard${idx}`;
+
+        let innerHTML = "";
+        switch (type) {
+          case "location":
+            innerHTML = `
+              <img src="${imgSrc}" alt="">
+              <div class="sample-body">
+                ${tag ? `<div class="tag">${tag}</div>` : ""}
+                <div class="title">${title || "タイトルを入力"}</div>
+                <div class="desc">
+                  <div>📍 ${desc || "住所を入力"}</div>
+                  <div>🕒 ${card.querySelector(".lc-additional")?.value || ""}</div>
+                </div>
+              </div>
+              ${b1 ? `<div class="buttons"><div class="btn">${b1}</div></div>` : ""}
+            `;
+            break;
+          case "person":
+            innerHTML = `
+              <div class="person-card">
+                <div class="person-img"><img src="${imgSrc}" alt=""></div>
+                <div class="person-info">
+                  <div class="title">${title || "名前を入力"}</div>
+                  ${tag ? `<div class="tag">${tag}</div>` : ""}
+                  <div class="desc">${desc || ""}</div>
+                </div>
+              </div>
+              ${b1 ? `<div class="buttons"><div class="btn">${b1}</div></div>` : ""}
+            `;
+            break;
+          case "image":
+            innerHTML = `
+              <div class="image-only">
+                <img src="${imgSrc}" alt="">
+                ${tag ? `<div class="tag">${tag}</div>` : ""}
+                ${b1 ? `<div class="img-btn">${b1}</div>` : ""}
+              </div>
+            `;
+            break;
+          default:
+            innerHTML = `
+              <img src="${imgSrc}" alt="">
+              <div class="sample-body">
+                ${tag ? `<div class="tag">${tag}</div>` : ""}
+                <div class="title">${title || "タイトルを入力"}</div>
+                <div class="desc">${desc || ""}</div>
+                ${price ? `<div class="price">¥${price}</div>` : ""}
+              </div>
+              ${b1 ? `<div class="buttons"><div class="btn">${b1}</div></div>` : ""}
+            `;
+        }
+
+        cardEl.innerHTML = innerHTML;
+        wrap.appendChild(cardEl);
+
+        const file = card.querySelector(".cd-image")?.files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => { cardEl.querySelector("img").src = e.target.result; };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    document.addEventListener("change", (e) => {
+      if (e.target.closest("#cardsWrap")) updateCardPreview();
+    });
+
+    const originalRenderCards = renderCards;
+    renderCards = function () {
+      originalRenderCards();
+      setTimeout(updateCardPreview, 200);
+    };
+  </script>
+</body>
+</html>
