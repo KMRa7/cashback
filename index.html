@@ -810,7 +810,6 @@
       // 送信
       const fd = new FormData();
       fd.append('payload', JSON.stringify({ base, detail }));
-
       await appendFilesBase64(fd, '#cardsWrap', 'cardImage');
       await appendFilesBase64(fd, '#scImage', 'scImage');
       await appendFilesBase64(fd, '#otherImages', 'othImage');
