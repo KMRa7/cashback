@@ -644,35 +644,28 @@
       setTimeout(updateCardPreview, 200);
     }
 
-    on($('#cardCount'), 'input', renderCards);
+    on($('#cardCount'), 'change', renderCards);
     on($('#cardGlobalType'), 'change', renderCards);
 
     // Base64 添付
-    const appendFilesBase64 = async (fd, selector, namePrefix) => {
-      const elems = Array.from(document.querySelectorAll(selector));
-      let inputs = [];
-      if (elems.length === 0) {
-        const el = document.querySelector(selector);
-        if (el) elems.push(el);
-      }
-      elems.forEach(el => {
-        if (el.tagName === 'INPUT' && el.type === 'file') inputs.push(el);
-        else inputs.push(...el.querySelectorAll('input[type="file"]'));
-      });
-      const readers = [];
+    async function appendFilesBase64(fd, selector, namePrefix) {
+      const inputs = Array.from(document.querySelectorAll(`${selector} input[type="file"]`));
       let idx = 0;
-      inputs.forEach(input => {
-        Array.from(input.files || []).forEach(file => {
-          readers.push(new Promise((resolve, reject) => {
+      for (const input of inputs) {
+        const files = Array.from(input.files || []);
+        for (const file of files) {
+          await new Promise((resolve, reject) => {
             const fr = new FileReader();
-            fr.onload = () => { fd.append('b64_' + namePrefix + '_' + (idx++), String(fr.result)); resolve(); };
+            fr.onload = () => {
+              fd.append('b64_' + namePrefix + '_' + (idx++), String(fr.result));
+              resolve();
+            };
             fr.onerror = reject;
             fr.readAsDataURL(file);
-          }));
-        });
-      });
-      await Promise.all(readers);
-    };
+          });
+        }
+      }
+    }
 
     function collectData() {
       const base = {
@@ -1096,6 +1089,20 @@
       wireInputFocusToHighlight();
       mountLocalActionsToAll();
     });
-  </script>
+
+    // 【スマホ専用UIの見た目調整】
+    document.addEventListener('DOMContentLoaded', () => {
+      const style = document.createElement('style');
+      style.textContent = `
+        body{background:#fafafa;padding-bottom:100px;}
+        input,textarea,select,button{font-size:16px !important;}
+        .local-actions{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:12px;border-top:1px solid #ddd;z-index:50;}
+        .local-actions button{width:100%;font-size:17px;padding:14px;background:#06C755;color:#fff;border:none;border-radius:8px;font-weight:600;}
+        .local-actions .tip{display:none;}
+        label{font-size:15px;}
+      `;
+      document.head.appendChild(style);
+    });
+</script>
 </body>
 </html>
