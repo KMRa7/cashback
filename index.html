@@ -1,77 +1,390 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>外部向け・問い合わせフォーム（送信のみ）</title>
   <style>
-    :root{--bg:#f7f8f9;--panel:#ffffff;--border:#e0e4ea;--text:#222;--sub:#666;--accent:#06C755;--accent-light:#d6f5dd;}
-    html,body{margin:0;padding:0;background:var(--bg);font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif;color:var(--text);-webkit-text-size-adjust:100%;}
-    .container{max-width:640px;margin:0 auto;padding:20px 16px 60px;}
-    h1{font-size:20px;margin-bottom:12px;text-align:center;color:#111;}
-    .badge{display:inline-block;background:var(--accent-light);color:var(--accent);font-size:13px;padding:4px 10px;border-radius:999px;font-weight:600;margin:0 auto 20px;}
-    .section{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px 16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
-    .section h3,.section h4{margin-top:0;font-size:16px;margin-bottom:12px;border-left:4px solid var(--accent);padding-left:8px;color:#111;}
-    label{font-weight:600;font-size:14px;color:#222;}
-    .req{color:#e54848;}
-    .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
-    input[type="text"],input[type="number"],input[type="date"],input[type="url"],input[type="datetime-local"],textarea,select{width:100%;padding:12px 14px;border-radius:8px;border:1px solid var(--border);background:#fff;color:#222;font-size:15px;box-sizing:border-box;}
-    textarea{min-height:100px;resize:vertical;}
-    .mini{font-size:12.5px;color:var(--sub);line-height:1.5;}
-    .buttons{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
-    button{font-size:16px;font-weight:600;border-radius:8px;padding:14px;cursor:pointer;border:none;transition:.2s ease;}
-    button.primary{background:var(--accent);color:#fff;}
-    button.primary:hover{background:#05b54e;}
+    :root {
+      --bg: #f7f8f9;
+      --panel: #ffffff;
+      --border: #e0e4ea;
+      --text: #222;
+      --sub: #666;
+      --accent: #06C755;
+      --accent-light: #d6f5dd;
+    }
 
-    /* カードUI / 見た目プレビュー（自動） */
-    .sample-container{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;}
-    .sample-card{width:200px;border-radius:12px;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.08);overflow:hidden;border:1px solid #e0e0e0;font-size:13px;}
-    .sample-card img{width:100%;height:120px;object-fit:cover;}
-    .sample-card .sample-body{padding:8px 10px 12px;}
-    .sample-card .title{font-weight:600;margin:4px 0;color:#222;}
-    .sample-card .desc{color:#555;font-size:12px;line-height:1.4;}
-    .sample-card .tag{background:#555;color:#fff;font-size:11px;border-radius:6px;padding:2px 6px;display:inline-block;}
-    .sample-card .buttons{border-top:1px solid #eee;}
-    .sample-card .btn{text-align:center;color:#06c755;padding:6px;font-weight:600;cursor:pointer;}
-    .sample-card .price{text-align:right;color:#222;font-weight:600;}
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+      color: var(--text);
+      -webkit-text-size-adjust: 100%;
+    }
 
-    .coupon-card-container{display:flex;flex-direction:column;gap:12px;margin-top:14px;}
-    .coupon-card{border:1px solid var(--border);background:#fff;border-radius:10px;padding:16px 18px;box-shadow:0 2px 6px rgba(0,0,0,.05);cursor:pointer;transition:.2s;}
-    .coupon-card.active{border-color:var(--accent);background:var(--accent-light);box-shadow:0 0 0 2px rgba(6,199,85,0.2);}
-    .coupon-settings{background:#fff;border-radius:12px;padding:18px 16px 22px;border:1px solid var(--border);margin-top:16px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
-    .coupon-settings .grid{display:flex;flex-direction:column;gap:14px;}
-    .coupon-settings input,.coupon-settings textarea,.coupon-settings select{font-size:15px;padding:12px 14px;border-radius:8px;border:1px solid var(--border);background:#fdfdfd;}
-    .grid{display:flex;flex-direction:column;gap:10px;}
-    @media (min-width:720px){.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}}
-    .card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px;box-shadow:0 2px 6px rgba(0,0,0,.05);margin-bottom:10px;}
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 20px 16px 60px;
+    }
+
+    h1 {
+      font-size: 20px;
+      margin-bottom: 12px;
+      text-align: center;
+      color: #111;
+    }
+
+    .badge {
+      display: inline-block;
+      background: var(--accent-light);
+      color: var(--accent);
+      font-size: 13px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+      margin: 0 auto 20px;
+    }
+
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+    }
+
+    .section h3,
+    .section h4 {
+      margin-top: 0;
+      font-size: 16px;
+      margin-bottom: 12px;
+      border-left: 4px solid var(--accent);
+      padding-left: 8px;
+      color: #111;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 14px;
+      color: #222;
+    }
+
+    .req {
+      color: #e54848;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    input[type="url"],
+    input[type="datetime-local"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: #222;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .mini {
+      font-size: 12.5px;
+      color: var(--sub);
+      line-height: 1.5;
+    }
+
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    button {
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 8px;
+      padding: 14px;
+      cursor: pointer;
+      border: none;
+      transition: .2s ease;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    button.primary:hover {
+      background: #05b54e;
+    }
+
+    /* カードUI / プレビュー風見た目は残す（自動表示） */
+    .sample-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .sample-card {
+      width: 200px;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      border: 1px solid #e0e0e0;
+      font-size: 13px;
+    }
+
+    .sample-card img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+    }
+
+    .sample-card .sample-body {
+      padding: 8px 10px 12px;
+    }
+
+    .sample-card .title {
+      font-weight: 600;
+      margin: 4px 0;
+      color: #222;
+    }
+
+    .sample-card .desc {
+      color: #555;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .sample-card .tag {
+      background: #555;
+      color: #fff;
+      font-size: 11px;
+      border-radius: 6px;
+      padding: 2px 6px;
+      display: inline-block;
+    }
+
+    .sample-card .buttons {
+      border-top: 1px solid #eee;
+    }
+
+    .sample-card .btn {
+      text-align: center;
+      color: #06c755;
+      padding: 6px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .sample-card .price {
+      text-align: right;
+      color: #222;
+      font-weight: 600;
+    }
+
+    .coupon-card-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .coupon-card {
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px 18px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, .05);
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    .coupon-card.active {
+      border-color: var(--accent);
+      background: var(--accent-light);
+      box-shadow: 0 0 0 2px rgba(6, 199, 85, 0.2);
+    }
+
+    .coupon-settings {
+      background: #fff;
+      border-radius: 12px;
+      padding: 18px 16px 22px;
+      border: 1px solid var(--border);
+      margin-top: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+    }
+
+    .coupon-settings .grid {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .coupon-settings input,
+    .coupon-settings textarea,
+    .coupon-settings select {
+      font-size: 15px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fdfdfd;
+    }
+
+    .grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    @media (min-width:720px) {
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, .05);
+      margin-bottom: 10px;
+    }
 
     /* リッチメニュー */
-    .rm-map{position:relative;display:flex;justify-content:center;align-items:center;width:100%;margin:12px 0;}
-    .rm-map img{display:block;width:100%;max-width:320px;height:auto;border-radius:12px;border:1px solid var(--border);box-shadow:0 2px 6px rgba(0,0,0,0.08);object-fit:contain;pointer-events:none;}
-    .rm-hot{position:absolute;cursor:pointer;background:transparent;transition:background .2s;z-index:10;}
-    .rm-hot.active{background:rgba(6,199,85,0.25);border-radius:4px;}
-    .legend{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--sub);margin-top:8px;}
-    .legend .key::before{content:"■ ";color:var(--accent);}
-    .local-actions{position:sticky;bottom:-8px;background:#fff;padding:12px 0 4px;border-top:1px solid var(--border);display:flex;gap:10px;z-index:5;}
-    .local-actions .tip{margin-left:auto;font-size:12px;color:var(--sub);align-self:center;}
+    .rm-map {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      margin: 12px 0;
+    }
+
+    .rm-map img {
+      display: block;
+      width: 100%;
+      max-width: 320px;
+      height: auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    .rm-hot {
+      position: absolute;
+      cursor: pointer;
+      background: transparent;
+      transition: background .2s;
+      z-index: 10;
+    }
+
+    .rm-hot.active {
+      background: rgba(6, 199, 85, 0.25);
+      border-radius: 4px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+      font-size: 12px;
+      color: var(--sub);
+      margin-top: 8px;
+    }
+
+    .legend .key::before {
+      content: "■ ";
+      color: var(--accent);
+    }
+
+    .local-actions {
+      position: sticky;
+      bottom: -8px;
+      background: #fff;
+      padding: 12px 0 4px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      z-index: 5;
+    }
+
+    .local-actions .tip {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--sub);
+      align-self: center;
+    }
 
     /* sec-card 内装飾 */
-    #sec-card .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px 16px 20px;box-shadow:0 2px 5px rgba(0,0,0,.05);margin-bottom:18px;}
-    #sec-card .subfields,#sec-card .two{background:#f9fafb;border-radius:8px;padding:10px 12px 12px;margin-top:10px;border:1px solid #e9edf3;}
-    #sec-card input[type="file"]{background:#fff;padding:10px;border-radius:6px;border:1px solid #ccc;}
-    #sec-card .two{display:flex;flex-direction:column;gap:12px;}
-    @media (min-width:720px){#sec-card .two{flex-direction:row;}}
+    #sec-card .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 16px 20px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, .05);
+      margin-bottom: 18px;
+    }
 
-    /* ショップカード：カラー選択（12色） */
-    .color-samples{display:grid;grid-template-columns:repeat(auto-fit, minmax(80px, 1fr));gap:8px;}
-    .color-box{background:var(--c);padding:12px 0;text-align:center;border-radius:8px;color:#fff;font-weight:600;font-size:13px;border:1px solid rgba(0,0,0,.1);cursor:pointer;user-select:none;}
-    .color-box span{font-size:11px;display:block;opacity:.8;}
-    .color-box.selected{outline:2px solid var(--accent);outline-offset:2px;}
+    #sec-card .subfields,
+    #sec-card .two {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 10px 12px 12px;
+      margin-top: 10px;
+      border: 1px solid #e9edf3;
+    }
 
-    /* リッチメニュー強調 */
-    .card.highlight{box-shadow:0 0 0 3px rgba(6,199,85,0.4) !important;transition:box-shadow .3s ease;}
+    #sec-card input[type="file"] {
+      background: #fff;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    #sec-card .two {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    @media (min-width:720px) {
+      #sec-card .two {
+        flex-direction: row;
+      }
+    }
   </style>
 </head>
+
 <body>
   <div class="container">
     <div class="kicker">
@@ -142,7 +455,9 @@
       <div class="field" style="margin-bottom:12px">
         <label>リッチメニューの配置図（タップ/クリックで該当ボタンへジャンプ）</label>
         <div class="rm-map" id="rmMapWrap">
-          <img id="rmMapImg" src="https://www.dropbox.com/scl/fi/ob83wfx3fuy08m1f67vt3/1.jpg?rlkey=72kytf83rd7bhq1l09nds6gc3&st=njv25e3r&dl=1" alt="リッチメニュー配置図 A〜F（3x2）">
+          <img id="rmMapImg"
+            src="https://www.dropbox.com/scl/fi/ob83wfx3fuy08m1f67vt3/1.jpg?rlkey=72kytf83rd7bhq1l09nds6gc3&st=njv25e3r&dl=1"
+            alt="リッチメニュー配置図 A〜F（3x2）">
         </div>
         <div class="legend">
           <span class="key">A → ボタン1</span><span class="key">B → ボタン2</span><span class="key">C → ボタン3</span>
@@ -153,11 +468,12 @@
       <div class="mini" style="margin:6px 0 10px">各ボタンは「ボタン名」と「遷移先」の両方を入れると有効になります（片方のみ入力はエラー）。</div>
 
       <div id="rmButtons" class="row" style="flex-direction:column; gap:12px">
-        <!-- 1〜6 -->
+        <!-- 1〜6（省略せずそのまま） -->
         <div class="card" id="rmBtn1">
           <div class="mini" style="margin-bottom:6px">ボタン1</div>
           <div class="two">
-            <div class="field"><label>ボタン名（15文字）</label><input id="rmBtn1Label" maxlength="15" type="text" placeholder="例）予約する"></div>
+            <div class="field"><label>ボタン名（15文字）</label><input id="rmBtn1Label" maxlength="15" type="text"
+                placeholder="例）予約する"></div>
             <div class="field">
               <label>遷移先タイプ</label>
               <select id="rmBtn1Type">
@@ -169,7 +485,8 @@
               </select>
             </div>
           </div>
-          <div class="field"><label>遷移先内容</label><input id="rmBtn1Value" type="text" placeholder="https:// または 名称/テキスト"></div>
+          <div class="field"><label>遷移先内容</label><input id="rmBtn1Value" type="text" placeholder="https:// または 名称/テキスト">
+          </div>
         </div>
 
         <div class="card" id="rmBtn2">
@@ -274,20 +591,17 @@
           <input id="scColor" type="hidden" value="#5a5aff">
           <div class="color-samples" id="colorSamples">
             <div class="color-box" data-color="#ff3b30" style="--c:#ff3b30">RED<br><span>#ff3b30</span></div>
-            <div class="color-box" data-color="#ff6b00" style="--c:#ff6b00">ORANGE<br><span>#ff6b00</span></div>
-            <div class="color-box" data-color="#ffa500" style="--c:#ffa500">YELLOW<br><span>#ffa500</span></div>
             <div class="color-box" data-color="#34c759" style="--c:#34c759">GREEN<br><span>#34c759</span></div>
             <div class="color-box" data-color="#5a5aff" style="--c:#5a5aff">BLUE<br><span>#5a5aff</span></div>
             <div class="color-box" data-color="#6a0dad" style="--c:#6a0dad">PURPLE<br><span>#6a0dad</span></div>
-            <div class="color-box" data-color="#ff2d55" style="--c:#ff2d55">PINK<br><span>#ff2d55</span></div>
-            <div class="color-box" data-color="#5c4033" style="--c:#5c4033">BROWN<br><span>#5c4033</span></div>
-            <div class="color-box" data-color="#808080" style="--c:#808080">GRAY<br><span>#808080</span></div>
             <div class="color-box" data-color="#000000" style="--c:#000000">BLACK<br><span>#000000</span></div>
-            <div class="color-box" data-color="#ffffff" style="--c:#ffffff;color:#000">WHITE<br><span>#ffffff</span></div>
+            <div class="color-box" data-color="#ffffff" style="--c:#ffffff;color:#000">WHITE<br><span>#ffffff</span>
+            </div>
           </div>
           <div class="mini">クリックで選択</div>
         </div>
-        <div class="field"><label>ゴールまでのポイント数</label><input id="scGoalPoints" type="number" min="1" max="100" value="10"></div>
+        <div class="field"><label>ゴールまでのポイント数</label><input id="scGoalPoints" type="number" min="1" max="100"
+            value="10"></div>
         <div class="field"><label>ゴール特典名</label><input id="scGoalReward" type="text"></div>
         <div class="field"><label>チェックポイント</label><input id="scCheckpoint" type="text"></div>
         <div class="field"><label>チェックポイント特典</label><input id="scCheckpointReward" type="text"></div>
@@ -299,7 +613,10 @@
           <label><input type="radio" name="scLimit" value="sameDay" checked> 同日中の重複付与を禁止（0:00にリセット）</label><br>
           <label><input type="radio" name="scLimit" value="hours"> 指定時間内の重複付与を禁止：</label>
           <select id="scLimitHours" style="margin-left:8px;">
-            <option value="1">1時間</option><option value="3">3時間</option><option value="6">6時間</option><option value="12">12時間</option>
+            <option value="1">1時間</option>
+            <option value="3">3時間</option>
+            <option value="6">6時間</option>
+            <option value="12">12時間</option>
           </select><br>
           <label><input type="radio" name="scLimit" value="none"> 制限しない</label>
         </div>
@@ -355,9 +672,18 @@
       <div class="section" style="margin-top:18px">
         <h4>クーポン獲得条件</h4>
         <div class="coupon-card-container">
-          <div class="coupon-card active" data-type="none"><h5>🎁 条件なし</h5><p>すべてのユーザーが獲得可能</p></div>
-          <div class="coupon-card" data-type="lottery"><h5>🎯 抽選</h5><p>当選者のみ獲得可能</p></div>
-          <div class="coupon-card" data-type="referral"><h5>🤝 友だち紹介</h5><p>紹介した人・された人が対象</p></div>
+          <div class="coupon-card active" data-type="none">
+            <h5>🎁 条件なし</h5>
+            <p>すべてのユーザーが獲得可能</p>
+          </div>
+          <div class="coupon-card" data-type="lottery">
+            <h5>🎯 抽選</h5>
+            <p>当選者のみ獲得可能</p>
+          </div>
+          <div class="coupon-card" data-type="referral">
+            <h5>🤝 友だち紹介</h5>
+            <p>紹介した人・された人が対象</p>
+          </div>
         </div>
 
         <input type="hidden" id="cpAcquireType" value="none">
@@ -366,8 +692,10 @@
         <div id="cp-none-settings" class="coupon-settings" style="display:block;">
           <div class="grid">
             <div class="field"><label>クーポン名（60文字）</label><input id="cpNoneName" maxlength="60" type="text"></div>
-            <div class="field"><label>クーポン内容</label><input id="cpNoneContent" type="text" placeholder="例：500円引き／○○プレゼントなど"></div>
-            <div class="field"><label>有効期間</label><input id="cpNoneStart" type="datetime-local"> ～ <input id="cpNoneEnd" type="datetime-local"></div>
+            <div class="field"><label>クーポン内容</label><input id="cpNoneContent" type="text"
+                placeholder="例：500円引き／○○プレゼントなど"></div>
+            <div class="field"><label>有効期間</label><input id="cpNoneStart" type="datetime-local"> ～ <input id="cpNoneEnd"
+                type="datetime-local"></div>
             <div class="field">
               <label>利用ガイド</label>
               <textarea id="cpNoneGuide">- クーポンを使用するには、この画面をスタッフに提示してください。</textarea>
@@ -389,13 +717,19 @@
           <div class="grid">
             <div class="field"><label>クーポン名（60文字）</label><input id="cpLotteryName" maxlength="60" type="text"></div>
             <div class="field"><label>クーポン内容</label><input id="cpLotteryContent" type="text"></div>
-            <div class="field"><label>有効期間</label><input id="cpLotteryStart" type="datetime-local"> ～ <input id="cpLotteryEnd" type="datetime-local"></div>
+            <div class="field"><label>有効期間</label><input id="cpLotteryStart" type="datetime-local"> ～ <input
+                id="cpLotteryEnd" type="datetime-local"></div>
             <div class="field"><label>利用ガイド</label><textarea id="cpLotteryGuide">- クーポン提示でご利用ください。</textarea></div>
-            <div class="field"><label>当選確率（1～99%）</label><input id="cpLotteryRate" type="number" min="1" max="99" value="50"></div>
-            <div class="field"><label>当選者数の上限</label><input id="cpLotteryMax" type="number" min="1" placeholder="例：100"></div>
+            <div class="field"><label>当選確率（1～99%）</label><input id="cpLotteryRate" type="number" min="1" max="99"
+                value="50"></div>
+            <div class="field"><label>当選者数の上限</label><input id="cpLotteryMax" type="number" min="1" placeholder="例：100">
+            </div>
             <div class="field"><label>使用用途</label><input id="cpLotteryUse" type="text"></div>
             <div class="field"><label>使用可能回数</label>
-              <select id="cpLotteryLimit"><option value="once">1回のみ</option><option value="unlimited">上限なし</option></select>
+              <select id="cpLotteryLimit">
+                <option value="once">1回のみ</option>
+                <option value="unlimited">上限なし</option>
+              </select>
             </div>
             <div class="field"><label>（任意）利用条件</label><input id="cpLotteryCondition" type="text"></div>
           </div>
@@ -405,20 +739,30 @@
         <div id="cp-referral-settings" class="coupon-settings" style="display:none;">
           <div class="grid">
             <div class="field"><label>クーポン名（60文字）</label><input id="cpReferralName" maxlength="60" type="text"></div>
-            <div class="field"><label>紹介期間</label><input id="cpReferralStart" type="datetime-local"> ～ <input id="cpReferralEnd" type="datetime-local"></div>
+            <div class="field"><label>紹介期間</label><input id="cpReferralStart" type="datetime-local"> ～ <input
+                id="cpReferralEnd" type="datetime-local"></div>
             <div class="field"><label>注意事項</label><textarea id="cpReferralNote">- 予告なく変更または終了する場合があります。</textarea></div>
             <div class="field">
               <label>クーポン獲得日からの有効期間</label>
-              <select id="cpReferralValidType"><option value="7">7日間</option><option value="30">30日間</option><option value="custom">カスタム設定</option></select>
-              <input id="cpReferralCustomDays" type="number" min="1" max="180" placeholder="1～180日間" style="display:none;margin-top:6px;">
+              <select id="cpReferralValidType">
+                <option value="7">7日間</option>
+                <option value="30">30日間</option>
+                <option value="custom">カスタム設定</option>
+              </select>
+              <input id="cpReferralCustomDays" type="number" min="1" max="180" placeholder="1～180日間"
+                style="display:none;margin-top:6px;">
             </div>
             <div class="field"><label>クーポン内容</label><input id="cpReferralContent" type="text"></div>
             <div class="field"><label>利用ガイド</label><textarea id="cpReferralGuide">- クーポン提示でご利用ください。</textarea></div>
             <div class="field"><label>使用用途</label><input id="cpReferralUse" type="text"></div>
             <div class="field">
               <label>獲得可能回数</label>
-              <select id="cpReferralCountType"><option value="unlimited">上限なし</option><option value="custom">カスタム設定</option></select>
-              <input id="cpReferralCountCustom" type="number" min="1" max="30" placeholder="1～30回" style="display:none;margin-top:6px;">
+              <select id="cpReferralCountType">
+                <option value="unlimited">上限なし</option>
+                <option value="custom">カスタム設定</option>
+              </select>
+              <input id="cpReferralCountCustom" type="number" min="1" max="30" placeholder="1～30回"
+                style="display:none;margin-top:6px;">
             </div>
             <div class="field"><label>（任意）利用条件</label><input id="cpReferralCondition" type="text"></div>
           </div>
@@ -444,11 +788,39 @@
     </div>
   </div>
 
+  <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
   <script>
-    const GAS_URL = "https://super-term-2b6b.y-kimura11223.workers.dev/";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzlAVJqiRJ_sAZRLS-qFeDSBaJLr2G4LyrY6QG2zX5OwDW6Vrux32FGQVTfAuRJ_kXGLg/exec";
     const $ = s => document.querySelector(s);
     const on = (el, evt, fn) => el && el.addEventListener(evt, fn);
     const show = (el, v = true) => el.style.display = v ? '' : 'none';
+
+    // === LINE連携（LIFF） ===
+    const LIFF_ID = '2006164734-B8ynaQK5'; // ★必ず差し替え
+
+    let liffReady = false;
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        await liff.init({ liffId: LIFF_ID });
+        liffReady = true;
+        console.log('LIFF init OK');
+      } catch (e) {
+        console.warn('LIFF init 失敗（ブラウザ直開き等の可能性）:', e);
+      }
+    });
+
+    async function trySendToLINE(text) {
+      try {
+        if (!liffReady) return false;
+        // LIFFアプリ内で開かれているときのみ送信（外部ブラウザ直開きはスキップ）
+        if (!liff.isInClient()) return false;
+        await liff.sendMessages([{ type: 'text', text }]);
+        return true;
+      } catch (e) {
+        console.warn('LINE送信失敗:', e);
+        return false;
+      }
+    }
 
     // セクション管理
     const sections = {
@@ -464,18 +836,11 @@
       const v = $('#requestType').value;
       if (!v) return;
       show(sections[v], true);
-
-      // 表示直後の初期化（幅0対策）
-      if (v === 'richmenu') {
-        initRichmenuHotspots();
-        wireInputFocusToHighlight();
-      }
       if (v === 'card') renderCards();
-
       ensureLocalActions(sections[v]);
     });
 
-    // ---- カードUI生成 ----
+    // ---- カードUI生成（省略なし） ----
     function renderCards() {
       const wrap = $('#cardsWrap');
       const cntEl = $('#cardCount');
@@ -639,58 +1004,62 @@
         card.innerHTML = `${buildSubfields(globalType)}${buildActions(globalType)}`;
         wrap.appendChild(card);
       }
-
-      // 軽いディレイでプレビュー反映
-      setTimeout(updateCardPreview, 200);
     }
 
-    on($('#cardCount'), 'change', renderCards);
+    on($('#cardCount'), 'input', renderCards);
     on($('#cardGlobalType'), 'change', renderCards);
 
     // Base64 添付
-    async function appendFilesBase64(fd, selector, namePrefix) {
-      const inputs = Array.from(document.querySelectorAll(`${selector} input[type="file"]`));
+    const appendFilesBase64 = async (fd, selector, namePrefix) => {
+      const elems = Array.from(document.querySelectorAll(selector));
+      let inputs = [];
+      if (elems.length === 0) {
+        const el = document.querySelector(selector);
+        if (el) elems.push(el);
+      }
+      elems.forEach(el => {
+        if (el.tagName === 'INPUT' && el.type === 'file') inputs.push(el);
+        else inputs.push(...el.querySelectorAll('input[type="file"]'));
+      });
+      const readers = [];
       let idx = 0;
-      for (const input of inputs) {
-        const files = Array.from(input.files || []);
-        for (const file of files) {
-          await new Promise((resolve, reject) => {
+      inputs.forEach(input => {
+        Array.from(input.files || []).forEach(file => {
+          readers.push(new Promise((resolve, reject) => {
             const fr = new FileReader();
-            fr.onload = () => {
-              fd.append('b64_' + namePrefix + '_' + (idx++), String(fr.result));
-              resolve();
-            };
+            fr.onload = () => { fd.append('b64_' + namePrefix + '_' + (idx++), String(fr.result)); resolve(); };
             fr.onerror = reject;
             fr.readAsDataURL(file);
-          });
-        }
-      }
-    }
+          }));
+        });
+      });
+      await Promise.all(readers);
+    };
 
     function collectData() {
       const base = {
-        storeName: $('#storeName').value.trim(),
-        requestType: $('#requestType').value,
+        storeName: $('#storeName')?.value?.trim() || '',
+        requestType: $('#requestType')?.value || '',
         createdAt: new Date().toISOString(),
       };
 
       const detail = {};
 
+      // ---- ① カード ----
       if (base.requestType === 'card') {
         const cardType = ($('#cardGlobalType')?.value || 'image');
         const cards = [];
         const nodes = document.querySelectorAll('#cardsWrap .card');
 
         nodes.forEach((c, idx) => {
-          let meta = {};
-          let tag = '';
+          let tag = '', meta = {};
 
           if (cardType === 'product') {
             tag = (c.querySelector('.pd-tag')?.value || '').trim();
             meta = {
               title: (c.querySelector('.pd-title')?.value || '').trim(),
               desc: (c.querySelector('.pd-desc')?.value || '').trim(),
-              priceText: (c.querySelector('.pd-priceText')?.value || '').trim()
+              priceText: (c.querySelector('.pd-priceText')?.value || '').trim(),
             };
           } else if (cardType === 'location') {
             tag = (c.querySelector('.lc-tag')?.value || '').trim();
@@ -698,7 +1067,7 @@
               title: (c.querySelector('.lc-title')?.value || '').trim(),
               address: (c.querySelector('.lc-address')?.value || '').trim(),
               hours: (c.querySelector('.lc-hours')?.value || '').trim(),
-              priceText: (c.querySelector('.lc-priceText')?.value || '').trim()
+              priceText: (c.querySelector('.lc-priceText')?.value || '').trim(),
             };
           } else if (cardType === 'person') {
             meta = {
@@ -706,9 +1075,9 @@
               tags: [
                 (c.querySelector('.ps-tag1')?.value || '').trim(),
                 (c.querySelector('.ps-tag2')?.value || '').trim(),
-                (c.querySelector('.ps-tag3')?.value || '').trim()
+                (c.querySelector('.ps-tag3')?.value || '').trim(),
               ].filter(Boolean),
-              desc: (c.querySelector('.ps-desc')?.value || '').trim()
+              desc: (c.querySelector('.ps-desc')?.value || '').trim(),
             };
           } else {
             tag = (c.querySelector('.img-tag')?.value || '').trim();
@@ -716,11 +1085,17 @@
           }
 
           const actions = [];
-          const b1 = { label: (c.querySelector('.btn1-label')?.value || '').trim(), dest: (c.querySelector('.btn1-dest')?.value || '').trim() };
+          const b1 = {
+            label: (c.querySelector('.btn1-label')?.value || '').trim(),
+            dest: (c.querySelector('.btn1-dest')?.value || '').trim(),
+          };
           if (cardType === 'image') {
             if (b1.label && b1.dest) actions.push({ label: b1.label, destination: b1.dest });
           } else {
-            const b2 = { label: (c.querySelector('.btn2-label')?.value || '').trim(), dest: (c.querySelector('.btn2-dest')?.value || '').trim() };
+            const b2 = {
+              label: (c.querySelector('.btn2-label')?.value || '').trim(),
+              dest: (c.querySelector('.btn2-dest')?.value || '').trim(),
+            };
             if (b1.label && b1.dest) actions.push({ label: b1.label, destination: b1.dest });
             if (b2.label && b2.dest) actions.push({ label: b2.label, destination: b2.dest });
           }
@@ -731,38 +1106,235 @@
         detail.cards = cards;
       }
 
+      // ---- ② リッチメニュー ----
+      if (base.requestType === 'richmenu') {
+        const buttons = [];
+        for (let i = 1; i <= 6; i++) {
+          const label = $(`#rmBtn${i}Label`)?.value?.trim() || '';
+          const type = $(`#rmBtn${i}Type`)?.value || '';
+          const value = $(`#rmBtn${i}Value`)?.value?.trim() || '';
+          if (label || type || value) buttons.push({ index: i, label, type, value });
+        }
+        detail.richmenu = { buttons };
+      }
+
+      // ---- ③ ショップカード ----
+      if (base.requestType === 'shopcard') {
+        const limit = document.querySelector('input[name="scLimit"]:checked')?.value || 'sameDay';
+        const expireType = document.querySelector('input[name="scExpireType"]:checked')?.value || 'lastUse';
+        const notice = document.querySelector('input[name="scNotice"]:checked')?.value || '1day';
+
+        detail.shopcard = {
+          name: $('#scName')?.value?.trim() || '',
+          color: $('#scColor')?.value || '#5a5aff',
+          goalPoints: parseInt($('#scGoalPoints')?.value || '10', 10),
+          goalReward: $('#scGoalReward')?.value?.trim() || '',
+          checkpoint: $('#scCheckpoint')?.value?.trim() || '',
+          checkpointReward: $('#scCheckpointReward')?.value?.trim() || '',
+          guide: $('#scGuide')?.value || '',
+          bonus: parseInt($('#scBonus')?.value || '0', 10),
+          // 取得制限
+          limit: {
+            mode: limit,
+            hours: limit === 'hours' ? parseInt($('#scLimitHours')?.value || '1', 10) : null,
+          },
+          // 有効期限
+          expire: {
+            type: expireType,
+            lastUse: (expireType === 'lastUse') ? {
+              years: parseInt($('#scExpireLastYear')?.value || '1', 10),
+              months: parseInt($('#scExpireLastMonth')?.value || '0', 10),
+            } : null,
+            firstUse: (expireType === 'firstUse') ? {
+              years: parseInt($('#scExpireFirstYear')?.value || '1', 10),
+              months: parseInt($('#scExpireFirstMonth')?.value || '0', 10),
+            } : null,
+          },
+          // 有効期限通知
+          notice,
+          // 画像は Base64 添付（appendFilesBase64 が処理）
+          image: 'attached_as_b64_scImage_0',
+        };
+      }
+
+      // ---- ④ クーポン ----
+      if (base.requestType === 'coupon') {
+        const t = $('#cpAcquireType')?.value || 'none';
+
+        if (t === 'none') {
+          detail.coupon = {
+            type: t,
+            name: $('#cpNoneName')?.value?.trim() || '',
+            content: $('#cpNoneContent')?.value?.trim() || '',
+            start: $('#cpNoneStart')?.value || '',
+            end: $('#cpNoneEnd')?.value || '',
+            guide: $('#cpNoneGuide')?.value || '',
+            use: $('#cpNoneUse')?.value?.trim() || '',
+            limit: $('#cpNoneLimit')?.value || 'once',
+            condition: $('#cpNoneCondition')?.value?.trim() || '',
+          };
+        }
+
+        if (t === 'lottery') {
+          detail.coupon = {
+            type: t,
+            name: $('#cpLotteryName')?.value?.trim() || '',
+            content: $('#cpLotteryContent')?.value?.trim() || '',
+            start: $('#cpLotteryStart')?.value || '',
+            end: $('#cpLotteryEnd')?.value || '',
+            guide: $('#cpLotteryGuide')?.value || '',
+            rate: parseInt($('#cpLotteryRate')?.value || '50', 10),
+            maxWinners: parseInt($('#cpLotteryMax')?.value || '0', 10) || null,
+            use: $('#cpLotteryUse')?.value?.trim() || '',
+            limit: $('#cpLotteryLimit')?.value || 'once',
+            condition: $('#cpLotteryCondition')?.value?.trim() || '',
+          };
+        }
+
+        if (t === 'referral') {
+          const validType = $('#cpReferralValidType')?.value || '7';
+          const countType = $('#cpReferralCountType')?.value || 'unlimited';
+          detail.coupon = {
+            type: t,
+            name: $('#cpReferralName')?.value?.trim() || '',
+            period: {
+              start: $('#cpReferralStart')?.value || '',
+              end: $('#cpReferralEnd')?.value || '',
+            },
+            note: $('#cpReferralNote')?.value || '',
+            valid: {
+              type: validType,
+              days: (validType === 'custom') ? parseInt($('#cpReferralCustomDays')?.value || '0', 10) : parseInt(validType, 10),
+            },
+            content: $('#cpReferralContent')?.value?.trim() || '',
+            guide: $('#cpReferralGuide')?.value || '',
+            use: $('#cpReferralUse')?.value?.trim() || '',
+            acquireCount: {
+              type: countType,
+              value: (countType === 'custom') ? parseInt($('#cpReferralCountCustom')?.value || '0', 10) : null,
+            },
+            condition: $('#cpReferralCondition')?.value?.trim() || '',
+          };
+        }
+      }
+
+      // ---- ⑤ その他 ----
       if (base.requestType === 'other') {
         const files = Array.from($('#otherImages')?.files || []);
         detail.other = {
           text: ($('#otherText')?.value || '').trim(),
-          imagesMeta: files.map(f => ({ name: f.name, size: f.size, type: f.type }))
+          imagesMeta: files.map(f => ({ name: f.name, size: f.size, type: f.type })),
         };
       }
 
       return { base, detail };
     }
 
+
     // 送信のみ
+    // 送信用サマリー文字列を作成（LINEに送る）
+    function buildLineText({ base, detail }) {
+      const toJST = (iso) => {
+        try {
+          return new Date(iso).toLocaleString('ja-JP', { hour12: false });
+        } catch { return iso; }
+      };
+
+      const lines = [];
+      lines.push('【問い合わせフォーム 送信】');
+      lines.push(`店舗名：${base.storeName}`);
+      lines.push(`カテゴリ：${base.requestType}`);
+      lines.push(`送信：${toJST(base.createdAt)}`);
+
+      if (base.requestType === 'card' && detail.cards?.length) {
+        lines.push('\n— カード —');
+        detail.cards.forEach(c => {
+          const head = `#${c.index} [${c.type}]`;
+          let body = '';
+          if (c.type === 'image') {
+            body = (c.tag ? `tag:${c.tag}` : '');
+          } else if (c.type === 'product') {
+            body = `title:${c.meta.title || '-'} / price:${c.meta.priceText || '-'} / desc:${c.meta.desc || '-'}`;
+            if (c.tag) body = `tag:${c.tag} / ` + body;
+          } else if (c.type === 'location') {
+            body = `title:${c.meta.title || '-'} / addr:${c.meta.address || '-'} / hours:${c.meta.hours || '-'} / price:${c.meta.priceText || '-'}`;
+            if (c.tag) body = `tag:${c.tag} / ` + body;
+          } else if (c.type === 'person') {
+            body = `name:${c.meta.name || '-'} / tags:${(c.meta.tags || []).join(',') || '-'} / desc:${c.meta.desc || '-'}`;
+          }
+          const act = (c.actions || []).map(a => `${a.label} → ${a.destination}`).join(' , ');
+          lines.push(`・${head} ${body}${act ? ` / actions:${act}` : ''}`);
+        });
+        lines.push('(※ 画像はGASにBase64で送付)');
+      }
+
+      if (base.requestType === 'richmenu' && detail.richmenu?.buttons?.length) {
+        lines.push('\n— リッチメニュー —');
+        detail.richmenu.buttons.forEach(b => {
+          if (b.label || b.type || b.value) {
+            lines.push(`・Btn${b.index} "${b.label || '-'}" [${b.type || '-'}] → ${b.value || '-'}`);
+          }
+        });
+      }
+
+      if (base.requestType === 'shopcard' && detail.shopcard) {
+        const sc = detail.shopcard;
+        lines.push('\n— ショップカード —');
+        lines.push(`・名前:${sc.name || '-'} / 色:${sc.color} / 目標:${sc.goalPoints}pt / 特典:${sc.goalReward || '-'}`);
+        if (sc.checkpoint || sc.checkpointReward) lines.push(`・チェック:${sc.checkpoint || '-'} / 特典:${sc.checkpointReward || '-'}`);
+        lines.push(`・制限:${sc.limit.mode}${sc.limit.mode === 'hours' ? `(${sc.limit.hours}h)` : ''}`);
+        lines.push(`・期限:${sc.expire.type} / 通知:${sc.notice}`);
+        lines.push('(※ カード画像はGASにBase64で送付)');
+      }
+
+      if (base.requestType === 'coupon' && detail.coupon) {
+        const cp = detail.coupon;
+        lines.push('\n— クーポン —');
+        lines.push(`・タイプ:${cp.type} / 名称:${cp.name || '-'}`);
+        if (cp.type === 'none' || cp.type === 'lottery') {
+          if (cp.start || cp.end) lines.push(`・期間:${cp.start || '-'} 〜 ${cp.end || '-'}`);
+        }
+        if (cp.type === 'lottery') {
+          lines.push(`・当選率:${cp.rate}% / 上限:${cp.maxWinners || '-'}`);
+        }
+        if (cp.type === 'referral') {
+          lines.push(`・紹介期間:${cp.period?.start || '-'} 〜 ${cp.period?.end || '-'}`);
+          lines.push(`・有効:${cp.valid?.days || '-'}日 / 回数:${cp.acquireCount?.type}${cp.acquireCount?.value ? `(${cp.acquireCount.value})` : ''}`);
+        }
+        if (cp.content) lines.push(`・内容:${cp.content}`);
+        if (cp.use) lines.push(`・使用用途:${cp.use}`);
+        if (cp.condition) lines.push(`・条件:${cp.condition}`);
+      }
+
+      if (base.requestType === 'other' && detail.other) {
+        lines.push('\n— その他 —');
+        if (detail.other.text) lines.push(`・テキスト:${detail.other.text}`);
+        const n = detail.other.imagesMeta?.length || 0;
+        if (n) lines.push(`・画像枚数:${n}（GASへBase64送付）`);
+      }
+
+      return lines.join('\n');
+    }
+
+    // 送信本体（GAS → LINE）
     async function submitForm() {
       const { base, detail } = collectData();
 
-      // 必須
+      // === 必須チェック（共通）
       if (!base.storeName || !base.requestType) {
         alert('店舗名 と 大元カテゴリ は必須です');
         return;
       }
 
-      // カード時のチェック
+      // === タイプ別の最低限バリデーション ===
       if (base.requestType === 'card') {
         const cards = document.querySelectorAll('#cardsWrap .card');
         if (cards.length === 0) { alert('カード枚数を1〜9で指定してください'); return; }
         if (cards.length > 9) { alert('カードは最大9枚までです'); return; }
 
         const cardType = ($('#cardGlobalType')?.value || 'image');
-
         for (let i = 0; i < cards.length; i++) {
           const card = cards[i];
-
           const img = card.querySelector('.cd-image');
           const files = img?.files || [];
           if (!files.length) { alert(`カード${i + 1}: 画像を1枚選択してください`); return; }
@@ -785,7 +1357,7 @@
           const btn1 = { label: (card.querySelector('.btn1-label')?.value || '').trim(), dest: (card.querySelector('.btn1-dest')?.value || '').trim() };
           const btns = (cardType === 'image')
             ? [btn1]
-            : [ btn1, { label: (card.querySelector('.btn2-label')?.value || '').trim(), dest: (card.querySelector('.btn2-dest')?.value || '').trim() } ];
+            : [btn1, { label: (card.querySelector('.btn2-label')?.value || '').trim(), dest: (card.querySelector('.btn2-dest')?.value || '').trim() }];
 
           for (let j = 0; j < btns.length; j++) {
             const b = btns[j];
@@ -799,7 +1371,17 @@
         }
       }
 
-      // その他
+      if (base.requestType === 'richmenu') {
+        const btns = (detail.richmenu?.buttons || []);
+        const invalid = btns.find(b => (b.label || b.type || b.value) && !(b.label && b.type && b.value));
+        if (invalid) { alert(`ボタン${invalid.index}: 「ボタン名」「遷移先タイプ」「遷移先内容」をすべて入力してください`); return; }
+      }
+
+      if (base.requestType === 'coupon') {
+        const cp = detail.coupon || {};
+        if (!cp?.name && base.requestType === 'coupon') { alert('クーポン名を入力してください'); return; }
+      }
+
       if (base.requestType === 'other') {
         if (!detail.other?.text && (!$('#otherImages') || !$('#otherImages').files.length)) {
           alert('自由記述または画像のどちらかを入力してください');
@@ -807,21 +1389,35 @@
         }
       }
 
-      // 送信
+      // === 送信（GASにフルデータ / 画像はBase64で添付） ===
       const fd = new FormData();
       fd.append('payload', JSON.stringify({ base, detail }));
       await appendFilesBase64(fd, '#cardsWrap', 'cardImage');
       await appendFilesBase64(fd, '#scImage', 'scImage');
       await appendFilesBase64(fd, '#otherImages', 'othImage');
 
+      let gasOk = false;
       try {
         const res = await fetch(GAS_URL, { method: 'POST', body: fd });
         const txt = await res.text();
         let data; try { data = JSON.parse(txt); } catch { data = { raw: txt }; }
-        console.log('送信結果:', data);
-        alert('送信しました。問題なければこのまま画面を閉じてOKです。');
+        console.log('GAS送信結果:', data);
+        gasOk = true;
       } catch (err) {
+        console.error('GAS送信エラー:', err);
         alert('送信エラー: ' + err.message);
+        return; // GAS保存が前提の場合はここで止める
+      }
+
+      // === LINEへサマリー送信（LIFF内で開かれている場合のみ） ===
+      const summary = buildLineText({ base, detail });
+      const lineOk = await trySendToLINE(summary);
+
+      if (gasOk) {
+        alert(lineOk
+          ? '送信しました（GAS保存＋LINEへ送信）。画面を閉じてもOKです。'
+          : '送信しました（GAS保存完了）。※LINEアプリ外からのアクセスのため、LINE送信はスキップしました。');
+        try { if (lineOk) liff.closeWindow(); } catch { }
       }
     }
 
@@ -834,21 +1430,10 @@
       submitForm();
     });
 
-    // カラー選択（12色・初期選択復元）
+    // カラー選択
     document.addEventListener('DOMContentLoaded', () => {
       const boxes = document.querySelectorAll('#colorSamples .color-box');
       const hidden = document.getElementById('scColor');
-      if (!boxes.length || !hidden) return;
-
-      const init = (hidden.value || '').toLowerCase();
-      let hit = false;
-      boxes.forEach(box => {
-        if (box.dataset.color && box.dataset.color.toLowerCase() === init) {
-          box.classList.add('selected'); hit = true;
-        }
-      });
-      if (!hit) { boxes[0].classList.add('selected'); hidden.value = boxes[0].dataset.color; }
-
       boxes.forEach(box => {
         box.addEventListener('click', () => {
           boxes.forEach(b => b.classList.remove('selected'));
@@ -911,14 +1496,7 @@
           const d = document.createElement('div');
           d.className = 'rm-hot';
           d.dataset.btn = g.btn;
-          Object.assign(d.style, {
-            left: `${g.col * cellW}px`,
-            top: `${g.row * cellH}px`,
-            width: `${cellW}px`,
-            height: `${cellH}px`,
-            position: "absolute",
-            zIndex: 20
-          });
+          Object.assign(d.style, { left: `${g.col * cellW}px`, top: `${g.row * cellH}px`, width: `${cellW}px`, height: `${cellH}px`, position: "absolute", zIndex: 20 });
           d.addEventListener('click', () => highlightAndScroll(g.btn));
           wrap.appendChild(d);
         });
@@ -928,49 +1506,30 @@
       else img.addEventListener('load', renderHotspots);
       window.addEventListener('resize', renderHotspots);
       window.addEventListener('scroll', renderHotspots);
-
-      // 表示切替直後でも確実に描画
-      requestAnimationFrame(renderHotspots);
-    }
-
-    function toggleHighlight(btnIndex, on) {
-      const card = document.getElementById('rmBtn' + btnIndex);
-      const hotspot = document.querySelector(`.rm-hot[data-btn="${btnIndex}"]`);
-      if (card) card.classList.toggle('highlight', !!on);
-      if (hotspot) hotspot.classList.toggle('active', !!on);
     }
 
     function highlightAndScroll(btnIndex) {
-      for (let i = 1; i <= 6; i++) {
-        const c = document.getElementById('rmBtn' + i);
-        const h = document.querySelector(`.rm-hot[data-btn="${i}"]`);
-        if (c) c.classList.remove('highlight');
-        if (h) h.classList.remove('active');
-      }
-
       const card = document.getElementById('rmBtn' + btnIndex);
       const hotspot = document.querySelector(`.rm-hot[data-btn="${btnIndex}"]`);
       if (!card || !hotspot) return;
-
       card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-      setTimeout(() => {
-        card.classList.add('highlight');
-        hotspot.classList.add('active');
-        setTimeout(() => {
-          card.classList.remove('highlight');
-          hotspot.classList.remove('active');
-        }, 1500);
-      }, 350);
+      hotspot.classList.add('active');
+      setTimeout(() => hotspot.classList.remove('active'), 1200);
     }
+
+    window.addEventListener('load', () => {
+      initRichmenuHotspots();
+      wireInputFocusToHighlight();
+      mountLocalActionsToAll(); // 最初から各セクションに「送信」だけ出す
+    });
 
     function wireInputFocusToHighlight() {
       for (let i = 1; i <= 6; i++) {
         const card = document.getElementById('rmBtn' + i);
         if (!card) continue;
         card.querySelectorAll('input,select,textarea').forEach(el => {
-          el.addEventListener('focus', () => toggleHighlight(i, true));
-          el.addEventListener('blur',  () => toggleHighlight(i, false));
+          el.addEventListener('focus', () => { });
+          el.addEventListener('blur', () => { });
         });
       }
     }
@@ -1004,12 +1563,12 @@
       document.querySelector("#cardSampleWrap").style.display = "";
 
       cards.forEach((card, idx) => {
-        const type  = card.dataset.type || "product";
-        const tag   = card.querySelector(".img-tag, .pd-tag, .lc-tag")?.value?.trim() || "";
+        const type = card.dataset.type || "product";
+        const tag = card.querySelector(".img-tag, .pd-tag, .lc-tag")?.value?.trim() || "";
         const title = card.querySelector(".pd-title, .lc-title, .ps-name")?.value?.trim() || "";
-        const desc  = card.querySelector(".pd-desc, .lc-address, .ps-desc")?.value?.trim() || "";
-        const price = card.querySelector(".pd-priceText, .lc-priceText")?.value?.trim() || "";
-        const b1    = card.querySelector(".btn1-label")?.value?.trim() || "";
+        const desc = card.querySelector(".pd-desc, .lc-address, .ps-desc, .lc-additional")?.value?.trim() || "";
+        const price = card.querySelector(".pd-price")?.value?.trim() || "";
+        const b1 = card.querySelector(".btn1-label")?.value?.trim() || "";
 
         let imgSrc = "data:image/svg+xml;base64," + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240"><rect width="400" height="240" fill="#eaeaea"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="20" fill="#999">No Image</text></svg>');
 
@@ -1018,52 +1577,54 @@
         cardEl.id = `sampleCard${idx}`;
 
         let innerHTML = "";
-        if (type === "location") {
-          const hours = card.querySelector(".lc-hours")?.value?.trim() || "";
-          const line2 = hours ? `🕒 ${hours}` : (price ? `💴 ${price}` : "");
-          innerHTML = `
-            <img src="${imgSrc}" alt="">
-            <div class="sample-body">
-              ${tag ? `<div class="tag">${tag}</div>` : ""}
-              <div class="title">${title || "タイトルを入力"}</div>
-              <div class="desc">
-                <div>📍 ${desc || ""}</div>
-                ${line2 ? `<div>${line2}</div>` : ""}
-              </div>
-            </div>
-            ${b1 ? `<div class="buttons"><div class="btn">${b1}</div></div>` : ""}
-          `;
-        } else if (type === "person") {
-          innerHTML = `
-            <div class="person-card">
-              <div class="person-img"><img src="${imgSrc}" alt=""></div>
-              <div class="person-info">
-                <div class="title">${title || "名前を入力"}</div>
-                ${tag ? `<div class="tag">${tag}</div>` : ""}
-                <div class="desc">${desc || ""}</div>
-              </div>
-            </div>
-            ${b1 ? `<div class="buttons"><div class="btn">${b1}</div></div>` : ""}
-          `;
-        } else if (type === "image") {
-          innerHTML = `
-            <div class="image-only">
+        switch (type) {
+          case "location":
+            innerHTML = `
               <img src="${imgSrc}" alt="">
-              ${tag ? `<div class="tag">${tag}</div>` : ""}
-              ${b1 ? `<div class="img-btn">${b1}</div>` : ""}
-            </div>
-          `;
-        } else {
-          innerHTML = `
-            <img src="${imgSrc}" alt="">
-            <div class="sample-body">
-              ${tag ? `<div class="tag">${tag}</div>` : ""}
-              <div class="title">${title || "タイトルを入力"}</div>
-              <div class="desc">${desc || ""}</div>
-              ${price ? `<div class="price">${price}</div>` : ""}
-            </div>
-            ${b1 ? `<div class="buttons"><div class="btn">${b1}</div></div>` : ""}
-          `;
+              <div class="sample-body">
+                ${tag ? `<div class="tag">${tag}</div>` : ""}
+                <div class="title">${title || "タイトルを入力"}</div>
+                <div class="desc">
+                  <div>📍 ${desc || "住所を入力"}</div>
+                  <div>🕒 ${card.querySelector(".lc-additional")?.value || ""}</div>
+                </div>
+              </div>
+              ${b1 ? `<div class="buttons"><div class="btn">${b1}</div></div>` : ""}
+            `;
+            break;
+          case "person":
+            innerHTML = `
+              <div class="person-card">
+                <div class="person-img"><img src="${imgSrc}" alt=""></div>
+                <div class="person-info">
+                  <div class="title">${title || "名前を入力"}</div>
+                  ${tag ? `<div class="tag">${tag}</div>` : ""}
+                  <div class="desc">${desc || ""}</div>
+                </div>
+              </div>
+              ${b1 ? `<div class="buttons"><div class="btn">${b1}</div></div>` : ""}
+            `;
+            break;
+          case "image":
+            innerHTML = `
+              <div class="image-only">
+                <img src="${imgSrc}" alt="">
+                ${tag ? `<div class="tag">${tag}</div>` : ""}
+                ${b1 ? `<div class="img-btn">${b1}</div>` : ""}
+              </div>
+            `;
+            break;
+          default:
+            innerHTML = `
+              <img src="${imgSrc}" alt="">
+              <div class="sample-body">
+                ${tag ? `<div class="tag">${tag}</div>` : ""}
+                <div class="title">${title || "タイトルを入力"}</div>
+                <div class="desc">${desc || ""}</div>
+                ${price ? `<div class="price">¥${price}</div>` : ""}
+              </div>
+              ${b1 ? `<div class="buttons"><div class="btn">${b1}</div></div>` : ""}
+            `;
         }
 
         cardEl.innerHTML = innerHTML;
@@ -1082,26 +1643,12 @@
       if (e.target.closest("#cardsWrap")) updateCardPreview();
     });
 
-    // 初回ロード時：ホットスポット準備＆送信ボタン配置
-    window.addEventListener('load', () => {
-      initRichmenuHotspots();
-      wireInputFocusToHighlight();
-      mountLocalActionsToAll();
-    });
-
-    // 【スマホ専用UIの見た目調整】
-    document.addEventListener('DOMContentLoaded', () => {
-      const style = document.createElement('style');
-      style.textContent = `
-        body{background:#fafafa;padding-bottom:100px;}
-        input,textarea,select,button{font-size:16px !important;}
-        .local-actions{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:12px;border-top:1px solid #ddd;z-index:50;}
-        .local-actions button{width:100%;font-size:17px;padding:14px;background:#06C755;color:#fff;border:none;border-radius:8px;font-weight:600;}
-        .local-actions .tip{display:none;}
-        label{font-size:15px;}
-      `;
-      document.head.appendChild(style);
-    });
-</script>
+    const originalRenderCards = renderCards;
+    renderCards = function () {
+      originalRenderCards();
+      setTimeout(updateCardPreview, 200);
+    };
+  </script>
 </body>
+
 </html>
