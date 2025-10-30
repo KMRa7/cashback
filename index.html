@@ -1508,28 +1508,19 @@
           d.className = 'rm-hot';
           d.dataset.btn = g.btn;
       
-          Object.assign(d.style, {
-            position: 'absolute',
-            left: `${offsetX + g.col * cellW}px`,
-            top:  `${offsetY + g.row * cellH}px`,
-            width: `${cellW}px`,
-            height:`${cellH}px`,
-            zIndex: 20,
-            cursor: 'pointer',
-            background: 'transparent'
-            .rm-map { position: relative; }
-            .rm-map img { display:block; pointer-events:none; }
-          });
+          d.style.position = 'absolute';
+          d.style.left     = `${offsetX + g.col * cellW}px`;
+          d.style.top      = `${offsetY + g.row * cellH}px`;
+          d.style.width    = `${cellW}px`;
+          d.style.height   = `${cellH}px`;
+          d.style.zIndex   = '20';
+          d.style.cursor   = 'pointer';
+          d.style.background = 'transparent';
       
           d.addEventListener('click', () => highlightAndScroll(g.btn));
           wrap.appendChild(d);
         });
       };
-      if (img.complete && img.naturalWidth > 0) renderHotspots();
-      else img.addEventListener('load', renderHotspots);
-      window.addEventListener('resize', renderHotspots);
-      window.addEventListener('scroll', renderHotspots);
-    }
 
     function highlightAndScroll(btnIndex) {
       const card = document.getElementById('rmBtn' + btnIndex);
