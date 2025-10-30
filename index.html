@@ -1517,6 +1517,8 @@
             zIndex: 20,
             cursor: 'pointer',
             background: 'transparent'
+            .rm-map { position: relative; }
+            .rm-map img { display:block; pointer-events:none; }
           });
       
           d.addEventListener('click', () => highlightAndScroll(g.btn));
