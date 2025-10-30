@@ -1483,25 +1483,46 @@
       ];
 
       const renderHotspots = () => {
-        const imgW = img.offsetWidth;
-        const imgH = img.offsetHeight;
+        // 画像とラッパーの実座標を取得
+        const wrapRect = wrap.getBoundingClientRect();
+        const imgRect  = img.getBoundingClientRect();
+      
+        const imgW = imgRect.width;
+        const imgH = imgRect.height;
         if (!imgW || !imgH) return;
-
+      
+        // 画像が wrap の中で中央寄せされるので、そのズレ量を補正
+        const offsetX = imgRect.left - wrapRect.left;
+        const offsetY = imgRect.top  - wrapRect.top;
+      
+        // 3x2 グリッドのセルサイズ（画像サイズ基準）
         const cellW = imgW / 3;
         const cellH = imgH / 2;
-
+      
+        // 既存ホットスポットをクリア
         wrap.querySelectorAll('.rm-hot').forEach(el => el.remove());
-
+      
+        // 再配置
         grid.forEach(g => {
           const d = document.createElement('div');
           d.className = 'rm-hot';
           d.dataset.btn = g.btn;
-          Object.assign(d.style, { left: `${g.col * cellW}px`, top: `${g.row * cellH}px`, width: `${cellW}px`, height: `${cellH}px`, position: "absolute", zIndex: 20 });
+      
+          Object.assign(d.style, {
+            position: 'absolute',
+            left: `${offsetX + g.col * cellW}px`,
+            top:  `${offsetY + g.row * cellH}px`,
+            width: `${cellW}px`,
+            height:`${cellH}px`,
+            zIndex: 20,
+            cursor: 'pointer',
+            background: 'transparent'
+          });
+      
           d.addEventListener('click', () => highlightAndScroll(g.btn));
           wrap.appendChild(d);
         });
       };
-
       if (img.complete && img.naturalWidth > 0) renderHotspots();
       else img.addEventListener('load', renderHotspots);
       window.addEventListener('resize', renderHotspots);
