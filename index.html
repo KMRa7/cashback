@@ -116,6 +116,41 @@
     button.primary { background: var(--accent); color: #fff; }
     button.primary:hover { background: #05b54e; }
 
+    /* ステッパー */
+    .stepper {
+      display: grid;
+      grid-template-columns: 44px 1fr 44px;
+      align-items: stretch;
+      gap: 8px;
+      width: 100%;
+      max-width: 220px;
+    }
+    .stepper input {
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      -moz-appearance: textfield;
+    }
+    .stepper input::-webkit-outer-spin-button,
+    .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .stepper-btn {
+      background: #f2f4f6;
+      color: #111;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      touch-action: manipulation;
+    }
+    .stepper-btn:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
     /* カードUI / プレビュー（自動） */
     .sample-container {
       display: flex;
@@ -215,7 +250,6 @@
   <div class="container">
     <div class="kicker">
       <h1>問い合わせフォーム</h1>
-      <!-- 不自然なバッジは削除 -->
     </div>
 
     <!-- ① 基本情報 -->
@@ -252,7 +286,7 @@
       </div>
 
       <div class="row" style="align-items:center; margin-bottom:10px">
-        <div class="field" style="max-width:280px">
+        <div class="field" style="max-width:320px">
           <label>カードタイプ（全カードの初期値）<span class="req">*</span></label>
           <select id="cardGlobalType">
             <option value="image" selected>イメージ（写真＋キャプション）</option>
@@ -264,18 +298,29 @@
       </div>
 
       <div class="row" style="align-items:center">
-        <div class="field" style="max-width:220px">
+        <div class="field" style="max-width:320px">
           <label>作成枚数（1〜9）<span class="req">*</span></label>
-          <input
-            id="cardCount"
-            type="tel"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            maxlength="1"
-            value="1"
-            autocomplete="one-time-code"
-          />
-          <div class="mini">変更すると下のカードUIを再描画します</div>
+
+          <!-- ステッパー -->
+          <div class="stepper" aria-label="カード枚数ステッパー">
+            <button type="button" class="stepper-btn" id="ccDec" aria-label="減らす">−</button>
+            <input
+              id="cardCount"
+              type="tel"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              maxlength="1"
+              value="1"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+              aria-live="polite"
+            >
+            <button type="button" class="stepper-btn" id="ccInc" aria-label="増やす">＋</button>
+          </div>
+
+          <div class="mini">［− / ＋］ or Enter/フォーカス外しで反映／再描画します</div>
         </div>
         <div class="mini">各カードは<b>画像1枚必須</b>／タグ（任意）／アクションボタン（任意）を設定できます</div>
       </div>
@@ -618,12 +663,11 @@
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzthE4afFuwOnteu5lQg0YtyHbNTVdzC5w65MOIyGGttbq4xaYxE8ifb-AP14GWp6F05w/exec";
     const $ = s => document.querySelector(s);
-    const on = (el, evt, fn) => el && el.addEventListener(evt, fn);
+    const on = (el, evt, fn, opt) => el && el.addEventListener(evt, fn, opt);
     const show = (el, v = true) => el.style.display = v ? '' : 'none';
 
     // === LINE連携（LIFF） ===
     const LIFF_ID = '2006164734-B8ynaQK5';
-
     let liffReady = false;
     document.addEventListener('DOMContentLoaded', async () => {
       try {
@@ -661,7 +705,12 @@
       const v = $('#requestType').value;
       if (!v) return;
       show(sections[v], true);
-      if (v === 'card') renderCards();
+
+      if (v === 'card') {
+        // 現在のコミット済み枚数で描画
+        syncStepperDisabled();
+        renderCards();
+      }
 
       // クーポン初期表示を常に「条件なし」に戻す
       if (v === 'coupon') {
@@ -676,25 +725,110 @@
       ensureLocalActions(sections[v]); // 表示中セクションのみに設置
     });
 
+    // ===== ステッパー制御（ここが“張り付く”対策の要） =====
+    let cardCountCommitted = 1; // 最後に確定した値（1〜9）
+    const clamp19 = (n) => Math.max(1, Math.min(9, n));
+
     function toHalfWidthDigits(s) {
       return (s || '').replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
     }
-    
-    function getCardCountSafe() {
+
+    function getInputRawNumber() {
       const el = $('#cardCount');
-      let raw = toHalfWidthDigits((el.value || '').trim()).replace(/\D/g, '');
-      let n = raw ? parseInt(raw, 10) : 1;
-      if (!Number.isFinite(n)) n = 1;
-      if (n < 1) n = 1;
-      if (n > 9) n = 9;
-      el.value = String(n);
-      return n;
+      const raw = toHalfWidthDigits((el.value || '').trim()).replace(/\D/g, '');
+      if (!raw) return NaN;
+      return parseInt(raw, 10);
     }
+
+    function syncStepperDisabled() {
+      const dec = $('#ccDec'), inc = $('#ccInc');
+      if (!dec || !inc) return;
+      dec.disabled = (cardCountCommitted <= 1);
+      inc.disabled = (cardCountCommitted >= 9);
+    }
+
+    function commitCardCount(n) {
+      cardCountCommitted = clamp19(n);
+      $('#cardCount').value = String(cardCountCommitted);
+      syncStepperDisabled();
+      renderCards(); // このタイミングでのみ再描画
+    }
+
+    function commitFromInputOrRevert() {
+      const num = getInputRawNumber();
+      if (Number.isNaN(num)) {
+        // 入力が無効なら直前のコミット値を表示に戻すだけ
+        $('#cardCount').value = String(cardCountCommitted);
+        return;
+      }
+      commitCardCount(num);
+    }
+
+    // ステッパー長押し対応
+    function bindLongPress(btn, delta) {
+      let t = null, itv = null;
+
+      const step = () => {
+        const next = clamp19(cardCountCommitted + delta);
+        if (next !== cardCountCommitted) commitCardCount(next);
+      };
+
+      const down = (e) => {
+        e.preventDefault();
+        step();
+        t = setTimeout(() => { itv = setInterval(step, 80); }, 300);
+      };
+      const up = () => {
+        clearTimeout(t); t = null;
+        clearInterval(itv); itv = null;
+      };
+      on(btn, 'mousedown', down);
+      on(btn, 'mouseup', up);
+      on(btn, 'mouseleave', up);
+      on(btn, 'touchstart', down, { passive: false });
+      on(btn, 'touchend', up);
+      on(btn, 'touchcancel', up);
+    }
+
+    // 起動時：ステッパーにイベント付与
+    window.addEventListener('load', () => {
+      const dec = $('#ccDec'), inc = $('#ccInc'), input = $('#cardCount');
+      if (dec && inc && input) {
+        bindLongPress(dec, -1);
+        bindLongPress(inc, +1);
+
+        // 入力中は再描画しない（ここが“張り付く”現象の元を断つ）
+        on(input, 'input', () => { /* no rerender here */ });
+
+        // Enter で確定
+        on(input, 'keydown', (e) => {
+          if (e.key === 'Enter') {
+            commitFromInputOrRevert();
+            input.blur();
+          }
+        });
+
+        // フォーカス外れで確定
+        on(input, 'blur', commitFromInputOrRevert);
+
+        // ホイールでの値変更を抑止（iOS/WKWebView 安全側）
+        on(input, 'wheel', (e) => { e.preventDefault(); input.blur(); });
+
+        // タップしたら全選択（上書きしやすく）
+        on(input, 'focus', (e) => { e.target.select(); });
+
+        // 初期同期
+        syncStepperDisabled();
+      }
+
+      initRichmenuHotspots();
+      wireInputFocusToHighlight();
+    });
 
     // ---- カードUI生成 ----
     function renderCards() {
       const wrap = $('#cardsWrap');
-      const n = getCardCountSafe();
+      const n = cardCountCommitted; // 入力ではなく確定値を使う
       wrap.innerHTML = '';
       const globalType = ($('#cardGlobalType')?.value || 'image');
 
@@ -854,29 +988,10 @@
         wrap.appendChild(card);
       }
 
-      // 再描画後にプレビュー更新
       setTimeout(updateCardPreview, 0);
     }
 
-    // イベント：枚数は入力中に補正、確定で再描画
-    on($('#cardCount'), 'input', () => {
-      getCardCountSafe();
-      renderCards();              // 入力のたびに即再描画
-    });
-    
-    on($('#cardCount'), 'blur', () => {
-      getCardCountSafe();
-      renderCards();              // フォーカス外れでも再描画を保証
-    });
-    
-    // ホイールやスクロールで値が変わるのを防止（念のため）
-    on($('#cardCount'), 'wheel', (e) => {
-      e.preventDefault();
-      e.target.blur();
-    });
-    on($('#cardCount'), 'focus', (e) => e.target.select());
-
-    // カードタイプ変更で再描画
+    // カードタイプ変更で再描画（コミット済み枚数で）
     on($('#cardGlobalType'), 'change', renderCards);
 
     // Base64 添付
@@ -1396,11 +1511,6 @@
       setTimeout(() => hotspot.classList.remove('active'), 1200);
     }
 
-    window.addEventListener('load', () => {
-      initRichmenuHotspots();
-      wireInputFocusToHighlight();
-    });
-
     function wireInputFocusToHighlight() {
       for (let i = 1; i <= 6; i++) {
         const card = document.getElementById('rmBtn' + i);
@@ -1520,7 +1630,6 @@
       if (e.target.closest("#cardsWrap")) updateCardPreview();
       if (e.target.id === 'cardGlobalType' || e.target.id === 'cardCount') setTimeout(updateCardPreview, 200);
     });
-
     document.addEventListener("input", (e) => {
       if (e.target.closest("#cardsWrap")) updateCardPreview();
     });
