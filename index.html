@@ -266,7 +266,15 @@
       <div class="row" style="align-items:center">
         <div class="field" style="max-width:220px">
           <label>作成枚数（1〜9）<span class="req">*</span></label>
-          <input id="cardCount" type="number" min="1" max="9" step="1" inputmode="numeric" pattern="[0-9]*" value="1">
+          <input
+            id="cardCount"
+            type="tel"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="1"
+            value="1"
+            autocomplete="one-time-code"
+          />
           <div class="mini">変更すると下のカードUIを再描画します</div>
         </div>
         <div class="mini">各カードは<b>画像1枚必須</b>／タグ（任意）／アクションボタン（任意）を設定できます</div>
@@ -668,11 +676,17 @@
       ensureLocalActions(sections[v]); // 表示中セクションのみに設置
     });
 
-    // ---- 安全な枚数取得（1..9に補正） ----
+    function toHalfWidthDigits(s) {
+      return (s || '').replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
+    }
+    
     function getCardCountSafe() {
       const el = $('#cardCount');
-      const num = Number.isFinite(el.valueAsNumber) ? el.valueAsNumber : parseInt(el.value || '1', 10);
-      const n = Math.min(9, Math.max(1, Math.round(num || 1)));
+      let raw = toHalfWidthDigits((el.value || '').trim()).replace(/\D/g, '');
+      let n = raw ? parseInt(raw, 10) : 1;
+      if (!Number.isFinite(n)) n = 1;
+      if (n < 1) n = 1;
+      if (n > 9) n = 9;
       el.value = String(n);
       return n;
     }
@@ -845,9 +859,22 @@
     }
 
     // イベント：枚数は入力中に補正、確定で再描画
-    on($('#cardCount'), 'input', () => { getCardCountSafe(); });
-    on($('#cardCount'), 'change', () => { renderCards(); });
-    on($('#cardCount'), 'blur',   () => { renderCards(); });
+    on($('#cardCount'), 'input', () => {
+      getCardCountSafe();
+      renderCards();              // 入力のたびに即再描画
+    });
+    
+    on($('#cardCount'), 'blur', () => {
+      getCardCountSafe();
+      renderCards();              // フォーカス外れでも再描画を保証
+    });
+    
+    // ホイールやスクロールで値が変わるのを防止（念のため）
+    on($('#cardCount'), 'wheel', (e) => {
+      e.preventDefault();
+      e.target.blur();
+    });
+    on($('#cardCount'), 'focus', (e) => e.target.select());
 
     // カードタイプ変更で再描画
     on($('#cardGlobalType'), 'change', renderCards);
@@ -1492,6 +1519,10 @@
     document.addEventListener("change", (e) => {
       if (e.target.closest("#cardsWrap")) updateCardPreview();
       if (e.target.id === 'cardGlobalType' || e.target.id === 'cardCount') setTimeout(updateCardPreview, 200);
+    });
+
+    document.addEventListener("input", (e) => {
+      if (e.target.closest("#cardsWrap")) updateCardPreview();
     });
   </script>
 </body>
