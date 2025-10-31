@@ -119,6 +119,7 @@
 
     button.primary { background: var(--accent); color: #fff; }
     button.primary:hover { background: #05b54e; }
+    button[disabled] { opacity: .6; cursor: not-allowed; }
 
     /* ステッパー */
     .stepper {
@@ -233,11 +234,37 @@
     .color-box span { display: block; font-size: 10px; opacity: 0.8; }
     .color-box.selected { border: 2px solid #06c755; box-shadow: 0 0 0 2px rgba(6,199,85,0.3); transform: scale(1.05); }
     .color-box[data-color="#ffffff"] { border: 1px solid #ccc; color: #333; }
+
+    /* 送信中オーバーレイ */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,.75);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+    .loading-overlay.active { display: flex; }
+    .loading-box {
+      display: flex; align-items: center; gap: 12px;
+      background: #fff; padding: 14px 16px; border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(0,0,0,.1); border: 1px solid var(--border);
+      font-weight: 600; color: #333;
+    }
+    .spinner {
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 3px solid #e6eaf0; border-top-color: var(--accent);
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 
 <body>
-  <div class="container">
+  <div class="container" id="appRoot">
     <div class="kicker">
       <h1>問い合わせフォーム</h1>
     </div>
@@ -249,6 +276,7 @@
         <div class="field">
           <label>店舗名 / 企業名<span class="req">*</span></label>
           <input id="storeName" type="text" placeholder="例）〇〇サロン" required>
+          <div class="mini">※一度入力すると次回から自動入力されます</div>
         </div>
         <div class="field">
           <label>大元カテゴリ<span class="req">*</span></label>
@@ -644,6 +672,14 @@
     </div>
   </div>
 
+  <!-- 送信中オーバーレイ -->
+  <div id="loadingOverlay" class="loading-overlay" aria-hidden="true" role="alert" aria-live="assertive">
+    <div class="loading-box">
+      <div class="spinner" aria-hidden="true"></div>
+      <div>送信中…</div>
+    </div>
+  </div>
+
   <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
   <script>
     // ===== ズーム操作の抑止（iOS/LINE内WebView） =====
@@ -676,6 +712,26 @@
       } catch (e) {
         return false;
       }
+    }
+
+    // ====== 店舗名の自動保存・自動入力 ======
+    const STORE_NAME_KEY = 'liff_form.storeName';
+    // 初期読込
+    document.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem(STORE_NAME_KEY);
+      if (saved) {
+        const input = $('#storeName');
+        if (input && !input.value) input.value = saved;
+      }
+    });
+    // 入力のたびに保存
+    on($('#storeName'), 'input', (e) => {
+      localStorage.setItem(STORE_NAME_KEY, (e.target.value || '').trim());
+    });
+    // 送信成功時にも念のため保存
+    function persistStoreName() {
+      const val = ($('#storeName')?.value || '').trim();
+      if (val) localStorage.setItem(STORE_NAME_KEY, val);
     }
 
     // セクション管理
@@ -1340,8 +1396,21 @@
       return out.join('\n');
     }
 
+    // ====== 二重送信防止（ローディング＆ガード） ======
+    let isSubmitting = false;
+    function setLoading(v) {
+      const ov = $('#loadingOverlay');
+      if (!ov) return;
+      ov.classList.toggle('active', !!v);
+      ov.setAttribute('aria-hidden', v ? 'false' : 'true');
+      // 主要ボタンは無効化
+      document.querySelectorAll('button').forEach(b => b.disabled = !!v);
+    }
+
     // 送信（GAS → その後 LINE 送信）
     async function submitForm() {
+      if (isSubmitting) return; // 二重タップ防止（即リターン）
+
       const { base, detail } = collectData();
 
       // === 必須チェック（共通） ===
@@ -1413,6 +1482,11 @@
         }
       }
 
+      // ここから送信処理（ガードON＋ローディング表示）
+      isSubmitting = true;
+      setLoading(true);
+      persistStoreName();
+
       // === 送信（GASにフルデータ / 画像はBase64で添付） ===
       const fd = new FormData();
       fd.append('payload', JSON.stringify({ base, detail }));
@@ -1420,17 +1494,23 @@
       await appendFilesBase64(fd, '#scImage', 'scImage');
       await appendFilesBase64(fd, '#otherImages', 'othImage');
 
+      let lineOk = false;
       try {
         const res = await fetch(GAS_URL, { method: 'POST', body: fd });
         await res.text(); // 成否のみ
+        // === LINEへサマリー送信（LIFF内で開かれている場合のみ） ===
+        const summary = buildLineText({ base, detail });
+        lineOk = await trySendToLINE(summary);
       } catch (err) {
+        setLoading(false);
+        isSubmitting = false;
         alert('送信エラー: ' + err.message);
         return;
       }
 
-      // === LINEへサマリー送信（LIFF内で開かれている場合のみ） ===
-      const summary = buildLineText({ base, detail });
-      const lineOk = await trySendToLINE(summary);
+      // 送信後はローディングを外してからアラート
+      setLoading(false);
+      isSubmitting = false;
 
       alert(lineOk
         ? '送信しました（GAS保存＋LINEへ送信）。画面を閉じてもOKです。'
@@ -1571,7 +1651,7 @@
         <span class="tip">※上部の必須項目もご確認ください</span>
       `;
       sectionEl.appendChild(actions);
-      actions.querySelector('.btnSubmitLocal').addEventListener('click', submitForm);
+      actions.querySelector('.btnSubmitLocal').addEventListener('click', submitForm, { passive: true });
     }
 
     // カード見た目プレビュー（自動反映）
