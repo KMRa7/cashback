@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>外部向け・問い合わせフォーム（送信のみ）</title>
+  <title>問い合わせフォーム</title>
   <style>
     :root {
       --bg: #f7f8f9;
@@ -16,8 +16,7 @@
       --accent-light: #d6f5dd;
     }
 
-    html,
-    body {
+    html, body {
       margin: 0;
       padding: 0;
       background: var(--bg);
@@ -37,17 +36,6 @@
       margin-bottom: 12px;
       text-align: center;
       color: #111;
-    }
-
-    .badge {
-      display: inline-block;
-      background: var(--accent-light);
-      color: var(--accent);
-      font-size: 13px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-weight: 600;
-      margin: 0 auto 20px;
     }
 
     .section {
@@ -75,9 +63,7 @@
       color: #222;
     }
 
-    .req {
-      color: #e54848;
-    }
+    .req { color: #e54848; }
 
     .field {
       display: flex;
@@ -103,10 +89,7 @@
       box-sizing: border-box;
     }
 
-    textarea {
-      min-height: 100px;
-      resize: vertical;
-    }
+    textarea { min-height: 100px; resize: vertical; }
 
     .mini {
       font-size: 12.5px;
@@ -131,23 +114,16 @@
       transition: .2s ease;
     }
 
-    button.primary {
-      background: var(--accent);
-      color: #fff;
-    }
+    button.primary { background: var(--accent); color: #fff; }
+    button.primary:hover { background: #05b54e; }
 
-    button.primary:hover {
-      background: #05b54e;
-    }
-
-    /* カードUI / プレビュー風見た目は残す（自動表示） */
+    /* カードUI / プレビュー（自動） */
     .sample-container {
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
       margin-top: 10px;
     }
-
     .sample-card {
       width: 200px;
       border-radius: 12px;
@@ -157,276 +133,90 @@
       border: 1px solid #e0e0e0;
       font-size: 13px;
     }
-
-    .sample-card img {
-      width: 100%;
-      height: 120px;
-      object-fit: cover;
-    }
-
-    .sample-card .sample-body {
-      padding: 8px 10px 12px;
-    }
-
-    .sample-card .title {
-      font-weight: 600;
-      margin: 4px 0;
-      color: #222;
-    }
-
-    .sample-card .desc {
-      color: #555;
-      font-size: 12px;
-      line-height: 1.4;
-    }
-
+    .sample-card img { width: 100%; height: 120px; object-fit: cover; }
+    .sample-card .sample-body { padding: 8px 10px 12px; }
+    .sample-card .title { font-weight: 600; margin: 4px 0; color: #222; }
+    .sample-card .desc { color: #555; font-size: 12px; line-height: 1.4; }
     .sample-card .tag {
-      background: #555;
-      color: #fff;
-      font-size: 11px;
-      border-radius: 6px;
-      padding: 2px 6px;
-      display: inline-block;
+      background: #555; color: #fff; font-size: 11px; border-radius: 6px;
+      padding: 2px 6px; display: inline-block;
     }
+    .sample-card .buttons { border-top: 1px solid #eee; }
+    .sample-card .btn { text-align: center; color: #06c755; padding: 6px; font-weight: 600; cursor: pointer; }
+    .sample-card .price { text-align: right; color: #222; font-weight: 600; }
 
-    .sample-card .buttons {
-      border-top: 1px solid #eee;
-    }
-
-    .sample-card .btn {
-      text-align: center;
-      color: #06c755;
-      padding: 6px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .sample-card .price {
-      text-align: right;
-      color: #222;
-      font-weight: 600;
-    }
-
-    .coupon-card-container {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 14px;
-    }
-
+    .coupon-card-container { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
     .coupon-card {
-      border: 1px solid var(--border);
-      background: #fff;
-      border-radius: 10px;
-      padding: 16px 18px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, .05);
-      cursor: pointer;
-      transition: .2s;
+      border: 1px solid var(--border); background: #fff; border-radius: 10px;
+      padding: 16px 18px; box-shadow: 0 2px 6px rgba(0, 0, 0, .05); cursor: pointer; transition: .2s;
     }
-
-    .coupon-card.active {
-      border-color: var(--accent);
-      background: var(--accent-light);
-      box-shadow: 0 0 0 2px rgba(6, 199, 85, 0.2);
-    }
-
+    .coupon-card.active { border-color: var(--accent); background: var(--accent-light); box-shadow: 0 0 0 2px rgba(6, 199, 85, 0.2); }
     .coupon-settings {
-      background: #fff;
-      border-radius: 12px;
-      padding: 18px 16px 22px;
-      border: 1px solid var(--border);
-      margin-top: 16px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+      background: #fff; border-radius: 12px; padding: 18px 16px 22px; border: 1px solid var(--border);
+      margin-top: 16px; box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+    }
+    .coupon-settings .grid { display: flex; flex-direction: column; gap: 14px; }
+    .coupon-settings input, .coupon-settings textarea, .coupon-settings select {
+      font-size: 15px; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border); background: #fdfdfd;
     }
 
-    .coupon-settings .grid {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .coupon-settings input,
-    .coupon-settings textarea,
-    .coupon-settings select {
-      font-size: 15px;
-      padding: 12px 14px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: #fdfdfd;
-    }
-
-    .grid {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
+    .grid { display: flex; flex-direction: column; gap: 10px; }
     @media (min-width:720px) {
-      .grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-      }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     }
 
     .card {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, .05);
-      margin-bottom: 10px;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 12px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, .05); margin-bottom: 10px;
     }
 
     /* リッチメニュー */
-    .rm-map {
-      position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-      margin: 12px 0;
-    }
-
+    .rm-map { position: relative; display: flex; justify-content: center; align-items: center; width: 100%; margin: 12px 0; }
     .rm-map img {
-      display: block;
-      width: 100%;
-      max-width: 320px;
-      height: auto;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-      object-fit: contain;
-      pointer-events: none;
+      display: block; width: 100%; max-width: 320px; height: auto;
+      border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      object-fit: contain; pointer-events: none;
     }
+    .rm-hot { position: absolute; cursor: pointer; background: transparent; transition: background .2s; z-index: 10; }
+    .rm-hot.active { background: rgba(6,199,85,0.25); border-radius: 4px; }
 
-    .rm-hot {
-      position: absolute;
-      cursor: pointer;
-      background: transparent;
-      transition: background .2s;
-      z-index: 10;
-    }
-
-    .rm-hot.active {
-      background: rgba(6, 199, 85, 0.25);
-      border-radius: 4px;
-    }
-
-    .legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px 12px;
-      font-size: 12px;
-      color: var(--sub);
-      margin-top: 8px;
-    }
-
-    .legend .key::before {
-      content: "■ ";
-      color: var(--accent);
-    }
+    .legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--sub); margin-top: 8px; }
+    .legend .key::before { content: "■ "; color: var(--accent); }
 
     .local-actions {
-      position: sticky;
-      bottom: -8px;
-      background: #fff;
-      padding: 12px 0 4px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      gap: 10px;
-      z-index: 5;
+      position: sticky; bottom: -8px; background: #fff; padding: 12px 0 4px;
+      border-top: 1px solid var(--border); display: flex; gap: 10px; z-index: 5;
     }
-
-    .local-actions .tip {
-      margin-left: auto;
-      font-size: 12px;
-      color: var(--sub);
-      align-self: center;
-    }
+    .local-actions .tip { margin-left: auto; font-size: 12px; color: var(--sub); align-self: center; }
 
     /* sec-card 内装飾 */
-    #sec-card .card {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 18px 16px 20px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, .05);
-      margin-bottom: 18px;
+    #sec-card .card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 18px 16px 20px; box-shadow: 0 2px 5px rgba(0,0,0,.05); margin-bottom: 18px; }
+    #sec-card .subfields, #sec-card .two {
+      background: #f9fafb; border-radius: 8px; padding: 10px 12px 12px; margin-top: 10px; border: 1px solid #e9edf3;
     }
+    #sec-card input[type="file"] { background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #ccc; }
+    #sec-card .two { display: flex; flex-direction: column; gap: 12px; }
+    @media (min-width:720px) { #sec-card .two { flex-direction: row; } }
 
-    #sec-card .subfields,
-    #sec-card .two {
-      background: #f9fafb;
-      border-radius: 8px;
-      padding: 10px 12px 12px;
-      margin-top: 10px;
-      border: 1px solid #e9edf3;
-    }
-
-    #sec-card input[type="file"] {
-      background: #fff;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-
-    #sec-card .two {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    @media (min-width:720px) {
-      #sec-card .two {
-        flex-direction: row;
-      }
-    }
-
+    /* カラー見本 */
     .color-samples {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-      gap: 12px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px;
     }
-    
     .color-box {
-      border: 2px solid var(--border, #ddd);
-      border-radius: 8px;
-      padding: 8px;
-      font-size: 12px;
-      text-align: center;
-      background: var(--c);
-      color: #fff;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      border: 2px solid var(--border, #ddd); border-radius: 8px; padding: 8px; font-size: 12px; text-align: center;
+      background: var(--c); color: #fff; cursor: pointer; transition: all 0.2s ease;
     }
-    
-    .color-box span {
-      display: block;
-      font-size: 10px;
-      opacity: 0.8;
-    }
-    
-    .color-box.selected {
-      border: 2px solid #06c755; /* LINE緑をアクセントに */
-      box-shadow: 0 0 0 2px rgba(6, 199, 85, 0.3);
-      transform: scale(1.05);
-    }
-    
-    .color-box[data-color="#ffffff"] {
-      border: 1px solid #ccc;
-    }
-
-    
-    
+    .color-box span { display: block; font-size: 10px; opacity: 0.8; }
+    .color-box.selected { border: 2px solid #06c755; box-shadow: 0 0 0 2px rgba(6,199,85,0.3); transform: scale(1.05); }
+    .color-box[data-color="#ffffff"] { border: 1px solid #ccc; color: #333; }
   </style>
 </head>
 
 <body>
   <div class="container">
     <div class="kicker">
-      <h1>問い合わせフォーム（外部のお客様向け）</h1>
-      <span class="badge">送信のみ（プレビュー機能なし）</span>
+      <h1>問い合わせフォーム</h1>
+      <!-- 不自然なバッジは削除 -->
     </div>
 
     <!-- ① 基本情報 -->
@@ -447,7 +237,7 @@
             <option value="coupon">クーポン</option>
             <option value="other">その他（自由記述）</option>
           </select>
-          <div class="mini">※選択したカテゴリだけ下に表示されます</div>
+          <div class="mini">※選択したカテゴリのみ下に表示されます</div>
         </div>
       </div>
     </div>
@@ -505,12 +295,11 @@
       <div class="mini" style="margin:6px 0 10px">各ボタンは「ボタン名」と「遷移先」の両方を入れると有効になります（片方のみ入力はエラー）。</div>
 
       <div id="rmButtons" class="row" style="flex-direction:column; gap:12px">
-        <!-- 1〜6（省略せずそのまま） -->
+        <!-- 1〜6 -->
         <div class="card" id="rmBtn1">
           <div class="mini" style="margin-bottom:6px">ボタン1</div>
           <div class="two">
-            <div class="field"><label>ボタン名（15文字）</label><input id="rmBtn1Label" maxlength="15" type="text"
-                placeholder="例）予約する"></div>
+            <div class="field"><label>ボタン名（15文字）</label><input id="rmBtn1Label" maxlength="15" type="text" placeholder="例）予約する"></div>
             <div class="field">
               <label>遷移先タイプ</label>
               <select id="rmBtn1Type">
@@ -522,8 +311,7 @@
               </select>
             </div>
           </div>
-          <div class="field"><label>遷移先内容</label><input id="rmBtn1Value" type="text" placeholder="https:// または 名称/テキスト">
-          </div>
+          <div class="field"><label>遷移先内容</label><input id="rmBtn1Value" type="text" placeholder="https:// または 名称/テキスト"></div>
         </div>
 
         <div class="card" id="rmBtn2">
@@ -621,33 +409,34 @@
     <!-- ④ ショップカード -->
     <div id="sec-shopcard" class="section" style="display:none">
       <h3>④ ショップカード</h3>
+
+      <!-- ★閉じタグ不整合を修正：grid をこのブロックで完結 -->
       <div class="grid">
         <div class="field"><label>カード名</label><input id="scName" type="text"></div>
         <div class="field">
           <label>テーマカラー<span class="req">*</span></label>
           <input id="scColor" type="hidden" value="#5a5aff">
-            <div class="color-samples" id="colorSamples">
-              <div class="color-box" data-color="#ff3b30" style="--c:#ff3b30">RED<br><span>#ff3b30</span></div>
-              <div class="color-box" data-color="#ff9500" style="--c:#ff9500">ORANGE<br><span>#ff9500</span></div>
-              <div class="color-box" data-color="#ffcc00" style="--c:#ffcc00">YELLOW<br><span>#ffcc00</span></div>
-              <div class="color-box" data-color="#34c759" style="--c:#34c759">GREEN<br><span>#34c759</span></div>
-              <div class="color-box" data-color="#5a5aff" style="--c:#5a5aff">BLUE<br><span>#5a5aff</span></div>
-              <div class="color-box" data-color="#af52de" style="--c:#af52de">PURPLE<br><span>#af52de</span></div>
-              <div class="color-box" data-color="#ff2d55" style="--c:#ff2d55">PINK<br><span>#ff2d55</span></div>
-              <div class="color-box" data-color="#6b4a3b" style="--c:#6b4a3b">BROWN<br><span>#6b4a3b</span></div>
-              <div class="color-box" data-color="#8e8e93" style="--c:#8e8e93">GRAY<br><span>#8e8e93</span></div>
-              <div class="color-box" data-color="#000000" style="--c:#000000">BLACK<br><span>#000000</span></div>
-              <div class="color-box" data-color="#ffffff" style="--c:#ffffff; color:#333;">WHITE<br><span>#ffffff</span></div>
-            </div>
+          <div class="color-samples" id="colorSamples">
+            <div class="color-box" data-color="#ff3b30" style="--c:#ff3b30">RED<br><span>#ff3b30</span></div>
+            <div class="color-box" data-color="#ff9500" style="--c:#ff9500">ORANGE<br><span>#ff9500</span></div>
+            <div class="color-box" data-color="#ffcc00" style="--c:#ffcc00">YELLOW<br><span>#ffcc00</span></div>
+            <div class="color-box" data-color="#34c759" style="--c:#34c759">GREEN<br><span>#34c759</span></div>
+            <div class="color-box" data-color="#5a5aff" style="--c:#5a5aff">BLUE<br><span>#5a5aff</span></div>
+            <div class="color-box" data-color="#af52de" style="--c:#af52de">PURPLE<br><span>#af52de</span></div>
+            <div class="color-box" data-color="#ff2d55" style="--c:#ff2d55">PINK<br><span>#ff2d55</span></div>
+            <div class="color-box" data-color="#6b4a3b" style="--c:#6b4a3b">BROWN<br><span>#6b4a3b</span></div>
+            <div class="color-box" data-color="#8e8e93" style="--c:#8e8e93">GRAY<br><span>#8e8e93</span></div>
+            <div class="color-box" data-color="#000000" style="--c:#000000">BLACK<br><span>#000000</span></div>
+            <div class="color-box" data-color="#ffffff" style="--c:#ffffff; color:#333;">WHITE<br><span>#ffffff</span></div>
           </div>
-          <div class="mini">クリックで選択</div>
         </div>
-        <div class="field"><label>ゴールまでのポイント数</label><input id="scGoalPoints" type="number" min="1" max="100"
-            value="10"></div>
-        <div class="field"><label>ゴール特典名</label><input id="scGoalReward" type="text"></div>
-        <div class="field"><label>チェックポイント</label><input id="scCheckpoint" type="text"></div>
-        <div class="field"><label>チェックポイント特典</label><input id="scCheckpointReward" type="text"></div>
       </div>
+      <div class="mini">クリックで選択</div>
+
+      <div class="field"><label>ゴールまでのポイント数</label><input id="scGoalPoints" type="number" min="1" max="100" value="10"></div>
+      <div class="field"><label>ゴール特典名</label><input id="scGoalReward" type="text"></div>
+      <div class="field"><label>チェックポイント</label><input id="scCheckpoint" type="text"></div>
+      <div class="field"><label>チェックポイント特典</label><input id="scCheckpointReward" type="text"></div>
 
       <div class="section" style="margin-top:18px">
         <h4>ポイント取得制限</h4>
@@ -734,14 +523,9 @@
         <div id="cp-none-settings" class="coupon-settings" style="display:block;">
           <div class="grid">
             <div class="field"><label>クーポン名（60文字）</label><input id="cpNoneName" maxlength="60" type="text"></div>
-            <div class="field"><label>クーポン内容</label><input id="cpNoneContent" type="text"
-                placeholder="例：500円引き／○○プレゼントなど"></div>
-            <div class="field"><label>有効期間</label><input id="cpNoneStart" type="datetime-local"> ～ <input id="cpNoneEnd"
-                type="datetime-local"></div>
-            <div class="field">
-              <label>利用ガイド</label>
-              <textarea id="cpNoneGuide">- クーポンを使用するには、この画面をスタッフに提示してください。</textarea>
-            </div>
+            <div class="field"><label>クーポン内容</label><input id="cpNoneContent" type="text" placeholder="例：500円引き／○○プレゼントなど"></div>
+            <div class="field"><label>有効期間</label><input id="cpNoneStart" type="datetime-local"> ～ <input id="cpNoneEnd" type="datetime-local"></div>
+            <div class="field"><label>利用ガイド</label><textarea id="cpNoneGuide">- クーポンを使用するには、この画面をスタッフに提示してください。</textarea></div>
             <div class="field"><label>使用用途</label><input id="cpNoneUse" type="text"></div>
             <div class="field">
               <label>使用可能回数</label>
@@ -759,15 +543,13 @@
           <div class="grid">
             <div class="field"><label>クーポン名（60文字）</label><input id="cpLotteryName" maxlength="60" type="text"></div>
             <div class="field"><label>クーポン内容</label><input id="cpLotteryContent" type="text"></div>
-            <div class="field"><label>有効期間</label><input id="cpLotteryStart" type="datetime-local"> ～ <input
-                id="cpLotteryEnd" type="datetime-local"></div>
+            <div class="field"><label>有効期間</label><input id="cpLotteryStart" type="datetime-local"> ～ <input id="cpLotteryEnd" type="datetime-local"></div>
             <div class="field"><label>利用ガイド</label><textarea id="cpLotteryGuide">- クーポン提示でご利用ください。</textarea></div>
-            <div class="field"><label>当選確率（1～99%）</label><input id="cpLotteryRate" type="number" min="1" max="99"
-                value="50"></div>
-            <div class="field"><label>当選者数の上限</label><input id="cpLotteryMax" type="number" min="1" placeholder="例：100">
-            </div>
+            <div class="field"><label>当選確率（1～99%）</label><input id="cpLotteryRate" type="number" min="1" max="99" value="50"></div>
+            <div class="field"><label>当選者数の上限</label><input id="cpLotteryMax" type="number" min="1" placeholder="例：100"></div>
             <div class="field"><label>使用用途</label><input id="cpLotteryUse" type="text"></div>
-            <div class="field"><label>使用可能回数</label>
+            <div class="field">
+              <label>使用可能回数</label>
               <select id="cpLotteryLimit">
                 <option value="once">1回のみ</option>
                 <option value="unlimited">上限なし</option>
@@ -781,8 +563,7 @@
         <div id="cp-referral-settings" class="coupon-settings" style="display:none;">
           <div class="grid">
             <div class="field"><label>クーポン名（60文字）</label><input id="cpReferralName" maxlength="60" type="text"></div>
-            <div class="field"><label>紹介期間</label><input id="cpReferralStart" type="datetime-local"> ～ <input
-                id="cpReferralEnd" type="datetime-local"></div>
+            <div class="field"><label>紹介期間</label><input id="cpReferralStart" type="datetime-local"> ～ <input id="cpReferralEnd" type="datetime-local"></div>
             <div class="field"><label>注意事項</label><textarea id="cpReferralNote">- 予告なく変更または終了する場合があります。</textarea></div>
             <div class="field">
               <label>クーポン獲得日からの有効期間</label>
@@ -791,8 +572,7 @@
                 <option value="30">30日間</option>
                 <option value="custom">カスタム設定</option>
               </select>
-              <input id="cpReferralCustomDays" type="number" min="1" max="180" placeholder="1～180日間"
-                style="display:none;margin-top:6px;">
+              <input id="cpReferralCustomDays" type="number" min="1" max="180" placeholder="1～180日間" style="display:none;margin-top:6px;">
             </div>
             <div class="field"><label>クーポン内容</label><input id="cpReferralContent" type="text"></div>
             <div class="field"><label>利用ガイド</label><textarea id="cpReferralGuide">- クーポン提示でご利用ください。</textarea></div>
@@ -803,8 +583,7 @@
                 <option value="unlimited">上限なし</option>
                 <option value="custom">カスタム設定</option>
               </select>
-              <input id="cpReferralCountCustom" type="number" min="1" max="30" placeholder="1～30回"
-                style="display:none;margin-top:6px;">
+              <input id="cpReferralCountCustom" type="number" min="1" max="30" placeholder="1～30回" style="display:none;margin-top:6px;">
             </div>
             <div class="field"><label>（任意）利用条件</label><input id="cpReferralCondition" type="text"></div>
           </div>
@@ -825,7 +604,6 @@
       </div>
       <div class="buttons">
         <button class="primary" type="button" id="btnSubmitOther">この自由記述を送信</button>
-        <span class="mini">※上のカテゴリ選択で「その他（自由記述）」を選んだ状態で送信します。</span>
       </div>
     </div>
   </div>
@@ -838,7 +616,7 @@
     const show = (el, v = true) => el.style.display = v ? '' : 'none';
 
     // === LINE連携（LIFF） ===
-    const LIFF_ID = '2006164734-B8ynaQK5'; // ★必ず差し替え
+    const LIFF_ID = '2006164734-B8ynaQK5';
 
     let liffReady = false;
     document.addEventListener('DOMContentLoaded', async () => {
@@ -854,8 +632,7 @@
     async function trySendToLINE(text) {
       try {
         if (!liffReady) return false;
-        // LIFFアプリ内で開かれているときのみ送信（外部ブラウザ直開きはスキップ）
-        if (!liff.isInClient()) return false;
+        if (!liff.isInClient()) return false; // 外部ブラウザ直開きはスキップ
         await liff.sendMessages([{ type: 'text', text }]);
         return true;
       } catch (e) {
@@ -879,10 +656,21 @@
       if (!v) return;
       show(sections[v], true);
       if (v === 'card') renderCards();
-      ensureLocalActions(sections[v]);
+
+      // クーポン初期表示を常に「条件なし」に戻す（切替で残像しない）
+      if (v === 'coupon') {
+        document.querySelectorAll('.coupon-card').forEach(c => c.classList.remove('active'));
+        const none = document.querySelector('.coupon-card[data-type="none"]');
+        none?.classList.add('active');
+        $('#cpAcquireType').value = 'none';
+        document.querySelectorAll('.coupon-settings').forEach(s => s.style.display = 'none');
+        $('#cp-none-settings').style.display = 'block';
+      }
+
+      ensureLocalActions(sections[v]); // 表示中セクションのみに設置
     });
 
-    // ---- カードUI生成（省略なし） ----
+    // ---- カードUI生成（元仕様を維持） ----
     function renderCards() {
       const wrap = $('#cardsWrap');
       const cntEl = $('#cardCount');
@@ -1194,7 +982,7 @@
           },
           // 有効期限通知
           notice,
-          // 画像は Base64 添付（appendFilesBase64 が処理）
+          // 画像は Base64 添付
           image: 'attached_as_b64_scImage_0',
         };
       }
@@ -1272,14 +1060,11 @@
       return { base, detail };
     }
 
-
-    // 送信のみ
-    // 送信用サマリー文字列を作成（LINEに送る）
+    // 送信用サマリー文字列（LINEへ）
     function buildLineText({ base, detail }) {
       const toJST = (iso) => {
-        try {
-          return new Date(iso).toLocaleString('ja-JP', { hour12: false });
-        } catch { return iso; }
+        try { return new Date(iso).toLocaleString('ja-JP', { hour12: false }); }
+        catch { return iso; }
       };
 
       const lines = [];
@@ -1307,7 +1092,6 @@
           const act = (c.actions || []).map(a => `${a.label} → ${a.destination}`).join(' , ');
           lines.push(`・${head} ${body}${act ? ` / actions:${act}` : ''}`);
         });
-        lines.push('(※ 画像はGASにBase64で送付)');
       }
 
       if (base.requestType === 'richmenu' && detail.richmenu?.buttons?.length) {
@@ -1326,7 +1110,6 @@
         if (sc.checkpoint || sc.checkpointReward) lines.push(`・チェック:${sc.checkpoint || '-'} / 特典:${sc.checkpointReward || '-'}`);
         lines.push(`・制限:${sc.limit.mode}${sc.limit.mode === 'hours' ? `(${sc.limit.hours}h)` : ''}`);
         lines.push(`・期限:${sc.expire.type} / 通知:${sc.notice}`);
-        lines.push('(※ カード画像はGASにBase64で送付)');
       }
 
       if (base.requestType === 'coupon' && detail.coupon) {
@@ -1352,13 +1135,13 @@
         lines.push('\n— その他 —');
         if (detail.other.text) lines.push(`・テキスト:${detail.other.text}`);
         const n = detail.other.imagesMeta?.length || 0;
-        if (n) lines.push(`・画像枚数:${n}（GASへBase64送付）`);
+        if (n) lines.push(`・画像枚数:${n}`);
       }
 
       return lines.join('\n');
     }
 
-    // 送信本体（GAS → LINE）
+    // 送信（GAS → その後 LINE 送信）
     async function submitForm() {
       const { base, detail } = collectData();
 
@@ -1368,7 +1151,7 @@
         return;
       }
 
-      // === タイプ別の最低限バリデーション ===
+      // === タイプ別バリデーション ===
       if (base.requestType === 'card') {
         const cards = document.querySelectorAll('#cardsWrap .card');
         if (cards.length === 0) { alert('カード枚数を1〜9で指定してください'); return; }
@@ -1421,7 +1204,7 @@
 
       if (base.requestType === 'coupon') {
         const cp = detail.coupon || {};
-        if (!cp?.name && base.requestType === 'coupon') { alert('クーポン名を入力してください'); return; }
+        if (!cp?.name) { alert('クーポン名を入力してください'); return; }
       }
 
       if (base.requestType === 'other') {
@@ -1448,7 +1231,7 @@
       } catch (err) {
         console.error('GAS送信エラー:', err);
         alert('送信エラー: ' + err.message);
-        return; // GAS保存が前提の場合はここで止める
+        return;
       }
 
       // === LINEへサマリー送信（LIFF内で開かれている場合のみ） ===
@@ -1476,7 +1259,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       const boxes = document.querySelectorAll('#colorSamples .color-box');
       const hidden = document.getElementById('scColor');
-    
+
       boxes.forEach(box => {
         box.addEventListener('click', () => {
           boxes.forEach(b => b.classList.remove('selected'));
@@ -1484,9 +1267,9 @@
           hidden.value = box.dataset.color;
         });
       });
-    
-      // 初期選択（例：RED）
-      document.querySelector('[data-color="#ff3b30"]')?.classList.add('selected');
+
+      // 初期選択（BLUE）
+      document.querySelector('[data-color="#5a5aff"]')?.classList.add('selected');
     });
 
     // クーポンカード切替
@@ -1529,44 +1312,40 @@
       ];
 
       const renderHotspots = () => {
-        // 画像とラッパーの実座標を取得
         const wrapRect = wrap.getBoundingClientRect();
         const imgRect  = img.getBoundingClientRect();
-      
+
         const imgW = imgRect.width;
         const imgH = imgRect.height;
         if (!imgW || !imgH) return;
-      
-        // 画像が wrap の中で中央寄せされるので、そのズレ量を補正
+
         const offsetX = imgRect.left - wrapRect.left;
         const offsetY = imgRect.top  - wrapRect.top;
-      
-        // 3x2 グリッドのセルサイズ（画像サイズ基準）
+
         const cellW = imgW / 3;
         const cellH = imgH / 2;
-      
-        // 既存ホットスポットをクリア
+
         wrap.querySelectorAll('.rm-hot').forEach(el => el.remove());
-      
-        // 再配置
+
         grid.forEach(g => {
           const d = document.createElement('div');
           d.className = 'rm-hot';
           d.dataset.btn = g.btn;
-      
-          d.style.position = 'absolute';
-          d.style.left     = `${offsetX + g.col * cellW}px`;
-          d.style.top      = `${offsetY + g.row * cellH}px`;
-          d.style.width    = `${cellW}px`;
-          d.style.height   = `${cellH}px`;
-          d.style.zIndex   = '20';
-          d.style.cursor   = 'pointer';
-          d.style.background = 'transparent';
-      
+
+          d.style.left   = `${offsetX + g.col * cellW}px`;
+          d.style.top    = `${offsetY + g.row * cellH}px`;
+          d.style.width  = `${cellW}px`;
+          d.style.height = `${cellH}px`;
+
           d.addEventListener('click', () => highlightAndScroll(g.btn));
           wrap.appendChild(d);
         });
       };
+
+      // ★画像ロード後＆リサイズで確実に描画
+      if (img.complete) renderHotspots();
+      else img.addEventListener('load', renderHotspots);
+      window.addEventListener('resize', renderHotspots);
     }
 
     function highlightAndScroll(btnIndex) {
@@ -1581,7 +1360,7 @@
     window.addEventListener('load', () => {
       initRichmenuHotspots();
       wireInputFocusToHighlight();
-      mountLocalActionsToAll(); // 最初から各セクションに「送信」だけ出す
+      // mountLocalActionsToAll(); ← 削除：表示時のみ ensureLocalActions で設置
     });
 
     function wireInputFocusToHighlight() {
@@ -1595,10 +1374,10 @@
       }
     }
 
-    // 各カテゴリのローカル操作（送信のみ）※「その他」は専用ボタンあり
+    // 各カテゴリのローカル操作（表示中のみ追加）
     function ensureLocalActions(sectionEl) {
       if (!sectionEl || sectionEl.querySelector('.local-actions')) return;
-      if (sectionEl.id === 'sec-other') return;
+      if (sectionEl.id === 'sec-other') return; // その他は専用ボタンあり
       const actions = document.createElement('div');
       actions.className = 'local-actions';
       actions.innerHTML = `
@@ -1607,9 +1386,6 @@
       `;
       sectionEl.appendChild(actions);
       actions.querySelector('.btnSubmitLocal').addEventListener('click', submitForm);
-    }
-    function mountLocalActionsToAll() {
-      Object.values(sections).forEach(sec => ensureLocalActions(sec));
     }
 
     // カード見た目プレビュー（自動反映）
@@ -1627,8 +1403,10 @@
         const type = card.dataset.type || "product";
         const tag = card.querySelector(".img-tag, .pd-tag, .lc-tag")?.value?.trim() || "";
         const title = card.querySelector(".pd-title, .lc-title, .ps-name")?.value?.trim() || "";
-        const desc = card.querySelector(".pd-desc, .lc-address, .ps-desc, .lc-additional")?.value?.trim() || "";
-        const price = card.querySelector(".pd-price")?.value?.trim() || "";
+        const address = card.querySelector(".lc-address")?.value?.trim() || "";
+        const desc = card.querySelector(".pd-desc, .ps-desc")?.value?.trim() || "";
+        const hours = card.querySelector(".lc-hours")?.value?.trim() || "";
+        const priceText = card.querySelector(".pd-priceText, .lc-priceText")?.value?.trim() || "";
         const b1 = card.querySelector(".btn1-label")?.value?.trim() || "";
 
         let imgSrc = "data:image/svg+xml;base64," + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240"><rect width="400" height="240" fill="#eaeaea"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="20" fill="#999">No Image</text></svg>');
@@ -1646,33 +1424,32 @@
                 ${tag ? `<div class="tag">${tag}</div>` : ""}
                 <div class="title">${title || "タイトルを入力"}</div>
                 <div class="desc">
-                  <div>📍 ${desc || "住所を入力"}</div>
-                  <div>🕒 ${card.querySelector(".lc-additional")?.value || ""}</div>
+                  <div>📍 ${address || "住所を入力"}</div>
+                  <div>🕒 ${hours || ""}</div>
                 </div>
+                ${priceText ? `<div class="price">${priceText}</div>` : ""}
               </div>
               ${b1 ? `<div class="buttons"><div class="btn">${b1}</div></div>` : ""}
             `;
             break;
           case "person":
             innerHTML = `
-              <div class="person-card">
-                <div class="person-img"><img src="${imgSrc}" alt=""></div>
-                <div class="person-info">
-                  <div class="title">${title || "名前を入力"}</div>
-                  ${tag ? `<div class="tag">${tag}</div>` : ""}
-                  <div class="desc">${desc || ""}</div>
-                </div>
+              <img src="${imgSrc}" alt="">
+              <div class="sample-body">
+                <div class="title">${title || "名前を入力"}</div>
+                ${tag ? `<div class="tag">${tag}</div>` : ""}
+                <div class="desc">${desc || ""}</div>
               </div>
               ${b1 ? `<div class="buttons"><div class="btn">${b1}</div></div>` : ""}
             `;
             break;
           case "image":
             innerHTML = `
-              <div class="image-only">
-                <img src="${imgSrc}" alt="">
+              <img src="${imgSrc}" alt="">
+              <div class="sample-body">
                 ${tag ? `<div class="tag">${tag}</div>` : ""}
-                ${b1 ? `<div class="img-btn">${b1}</div>` : ""}
               </div>
+              ${b1 ? `<div class="buttons"><div class="btn">${b1}</div></div>` : ""}
             `;
             break;
           default:
@@ -1682,7 +1459,7 @@
                 ${tag ? `<div class="tag">${tag}</div>` : ""}
                 <div class="title">${title || "タイトルを入力"}</div>
                 <div class="desc">${desc || ""}</div>
-                ${price ? `<div class="price">¥${price}</div>` : ""}
+                ${priceText ? `<div class="price">${priceText}</div>` : ""}
               </div>
               ${b1 ? `<div class="buttons"><div class="btn">${b1}</div></div>` : ""}
             `;
@@ -1702,6 +1479,7 @@
 
     document.addEventListener("change", (e) => {
       if (e.target.closest("#cardsWrap")) updateCardPreview();
+      if (e.target.id === 'cardGlobalType' || e.target.id === 'cardCount') setTimeout(updateCardPreview, 200);
     });
 
     const originalRenderCards = renderCards;
@@ -1711,5 +1489,4 @@
     };
   </script>
 </body>
-
 </html>
