@@ -13,6 +13,14 @@
       --sub: #666;
       --accent: #06C755;
       --accent-light: #d6f5dd;
+
+      --ok-bg: #e8f7ef;
+      --ok-fg: #0b5b36;
+      --ok-bd: #2ecc71;
+
+      --err-bg: #fdecea;
+      --err-fg: #611a15;
+      --err-bd: #ff6b6b;
     }
 
     html, body {
@@ -86,6 +94,7 @@
       color: #222;
       font-size: 15px;
       box-sizing: border-box;
+      transition: box-shadow .2s ease, border-color .2s ease;
     }
 
     textarea { min-height: 100px; resize: vertical; }
@@ -151,7 +160,37 @@
       cursor: not-allowed;
     }
 
-    /* カードUI / プレビュー（自動） */
+    /* 顧客向けバナー（システムメッセージ非表示方針） */
+    .banner {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    .banner.show { display: flex; }
+    .banner.ok {
+      background: var(--ok-bg);
+      color: var(--ok-fg);
+      border: 1px solid var(--ok-bd);
+    }
+    .banner.err {
+      background: var(--err-bg);
+      color: var(--err-fg);
+      border: 1px solid var(--err-bd);
+    }
+
+    .is-invalid {
+      border-color: var(--err-bd) !important;
+      box-shadow: 0 0 0 2px rgba(255, 107, 107, .15);
+    }
+
+    /* カードUI / プレビュー */
     .sample-container {
       display: flex;
       flex-wrap: wrap;
@@ -184,7 +223,7 @@
       border: 1px solid var(--border); background: #fff; border-radius: 10px;
       padding: 16px 18px; box-shadow: 0 2px 6px rgba(0, 0, 0, .05); cursor: pointer; transition: .2s;
     }
-    .coupon-card.active { border-color: var(--accent); background: var(--accent-light); box-shadow: 0 0 0 2px rgba(6, 199, 85, 0.2); }
+    .coupon-card.active { border-color: var(--accent); background: var(--accent-light); box-shadow: 0 0 0 2px rgba(6,199,85,0.2); }
     .coupon-settings {
       background: #fff; border-radius: 12px; padding: 18px 16px 22px; border: 1px solid var(--border);
       margin-top: 16px; box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
@@ -248,6 +287,9 @@
 
 <body>
   <div class="container">
+    <!-- 顧客向けバナー（必要時のみ表示） -->
+    <div id="banner" class="banner" aria-live="polite"></div>
+
     <div class="kicker">
       <h1>問い合わせフォーム</h1>
     </div>
@@ -279,7 +321,6 @@
     <div id="sec-card" class="section" style="display:none">
       <h3>② カードタイプメッセージ（イメージ）</h3>
 
-      <!-- 入力に応じた見た目プレビュー（自動） -->
       <div id="cardSampleWrap" style="margin-top:20px; display:none;">
         <h4>カード見た目プレビュー</h4>
         <div id="cardSampleContainer" class="sample-container"></div>
@@ -320,7 +361,7 @@
             <button type="button" class="stepper-btn" id="ccInc" aria-label="増やす">＋</button>
           </div>
 
-          <div class="mini">［− / ＋］ or Enter/フォーカス外しで反映／再描画します</div>
+          <div class="mini">［− / ＋］ または Enter/フォーカス外しで反映</div>
         </div>
         <div class="mini">各カードは<b>画像1枚必須</b>／タグ（任意）／アクションボタン（任意）を設定できます</div>
       </div>
@@ -344,10 +385,10 @@
         </div>
       </div>
 
-      <div class="mini" style="margin:6px 0 10px">各ボタンは「ボタン名」と「遷移先」の両方を入れると有効になります（片方のみ入力はエラー）。</div>
+      <div class="mini" style="margin:6px 0 10px">各ボタンは「ボタン名」と「遷移先」の両方を入れると有効になります。</div>
 
       <div id="rmButtons" class="row" style="flex-direction:column; gap:12px">
-        <!-- 1〜6 -->
+        <!-- 1〜6（内容は前版と同じ） -->
         <div class="card" id="rmBtn1">
           <div class="mini" style="margin-bottom:6px">ボタン1</div>
           <div class="two">
@@ -666,6 +707,27 @@
     const on = (el, evt, fn, opt) => el && el.addEventListener(evt, fn, opt);
     const show = (el, v = true) => el.style.display = v ? '' : 'none';
 
+    // ==== 顧客向けミニバナー ====
+    function showBanner(type, text, ms = 2800) {
+      const el = $('#banner');
+      if (!el) return;
+      el.className = `banner ${type === 'ok' ? 'ok' : 'err'} show`;
+      el.textContent = text;
+      if (ms > 0) {
+        clearTimeout(el.__t);
+        el.__t = setTimeout(() => { el.classList.remove('show'); }, ms);
+      }
+    }
+
+    function clearInvalids() {
+      document.querySelectorAll('.is-invalid').forEach(n => n.classList.remove('is-invalid'));
+    }
+    function markInvalid(el) {
+      if (!el) return;
+      const target = el.closest('.field')?.querySelector('input,select,textarea') || el;
+      target.classList.add('is-invalid');
+    }
+
     // === LINE連携（LIFF） ===
     const LIFF_ID = '2006164734-B8ynaQK5';
     let liffReady = false;
@@ -673,20 +735,18 @@
       try {
         await liff.init({ liffId: LIFF_ID });
         liffReady = true;
-        console.log('LIFF init OK');
       } catch (e) {
-        console.warn('LIFF init 失敗（ブラウザ直開き等の可能性）:', e);
+        // 顧客向け：沈黙（外部ブラウザでも問題なく送信可能）
       }
     });
 
     async function trySendToLINE(text) {
       try {
         if (!liffReady) return false;
-        if (!liff.isInClient()) return false; // 外部ブラウザ直開きはスキップ
+        if (!liff.isInClient()) return false;
         await liff.sendMessages([{ type: 'text', text }]);
         return true;
       } catch (e) {
-        console.warn('LINE送信失敗:', e);
         return false;
       }
     }
@@ -705,14 +765,7 @@
       const v = $('#requestType').value;
       if (!v) return;
       show(sections[v], true);
-
-      if (v === 'card') {
-        // 現在のコミット済み枚数で描画
-        syncStepperDisabled();
-        renderCards();
-      }
-
-      // クーポン初期表示を常に「条件なし」に戻す
+      if (v === 'card') { syncStepperDisabled(); renderCards(); }
       if (v === 'coupon') {
         document.querySelectorAll('.coupon-card').forEach(c => c.classList.remove('active'));
         const none = document.querySelector('.coupon-card[data-type="none"]');
@@ -721,67 +774,50 @@
         document.querySelectorAll('.coupon-settings').forEach(s => s.style.display = 'none');
         $('#cp-none-settings').style.display = 'block';
       }
-
-      ensureLocalActions(sections[v]); // 表示中セクションのみに設置
+      ensureLocalActions(sections[v]);
     });
 
-    // ===== ステッパー制御（ここが“張り付く”対策の要） =====
-    let cardCountCommitted = 1; // 最後に確定した値（1〜9）
+    // ===== ステッパー（“張り付く”対策） =====
+    let cardCountCommitted = 1;
     const clamp19 = (n) => Math.max(1, Math.min(9, n));
 
     function toHalfWidthDigits(s) {
       return (s || '').replace(/[０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
     }
-
     function getInputRawNumber() {
       const el = $('#cardCount');
       const raw = toHalfWidthDigits((el.value || '').trim()).replace(/\D/g, '');
       if (!raw) return NaN;
       return parseInt(raw, 10);
     }
-
     function syncStepperDisabled() {
       const dec = $('#ccDec'), inc = $('#ccInc');
       if (!dec || !inc) return;
       dec.disabled = (cardCountCommitted <= 1);
       inc.disabled = (cardCountCommitted >= 9);
     }
-
     function commitCardCount(n) {
       cardCountCommitted = clamp19(n);
       $('#cardCount').value = String(cardCountCommitted);
       syncStepperDisabled();
-      renderCards(); // このタイミングでのみ再描画
+      renderCards();
     }
-
     function commitFromInputOrRevert() {
       const num = getInputRawNumber();
       if (Number.isNaN(num)) {
-        // 入力が無効なら直前のコミット値を表示に戻すだけ
         $('#cardCount').value = String(cardCountCommitted);
         return;
       }
       commitCardCount(num);
     }
-
-    // ステッパー長押し対応
     function bindLongPress(btn, delta) {
       let t = null, itv = null;
-
       const step = () => {
         const next = clamp19(cardCountCommitted + delta);
         if (next !== cardCountCommitted) commitCardCount(next);
       };
-
-      const down = (e) => {
-        e.preventDefault();
-        step();
-        t = setTimeout(() => { itv = setInterval(step, 80); }, 300);
-      };
-      const up = () => {
-        clearTimeout(t); t = null;
-        clearInterval(itv); itv = null;
-      };
+      const down = (e) => { e.preventDefault(); step(); t = setTimeout(() => { itv = setInterval(step, 80); }, 300); };
+      const up = () => { clearTimeout(t); t = null; clearInterval(itv); itv = null; };
       on(btn, 'mousedown', down);
       on(btn, 'mouseup', up);
       on(btn, 'mouseleave', up);
@@ -790,37 +826,18 @@
       on(btn, 'touchcancel', up);
     }
 
-    // 起動時：ステッパーにイベント付与
     window.addEventListener('load', () => {
       const dec = $('#ccDec'), inc = $('#ccInc'), input = $('#cardCount');
       if (dec && inc && input) {
         bindLongPress(dec, -1);
         bindLongPress(inc, +1);
-
-        // 入力中は再描画しない（ここが“張り付く”現象の元を断つ）
-        on(input, 'input', () => { /* no rerender here */ });
-
-        // Enter で確定
-        on(input, 'keydown', (e) => {
-          if (e.key === 'Enter') {
-            commitFromInputOrRevert();
-            input.blur();
-          }
-        });
-
-        // フォーカス外れで確定
+        on(input, 'input', () => { /* 入力中は再描画しない */ });
+        on(input, 'keydown', (e) => { if (e.key === 'Enter') { commitFromInputOrRevert(); input.blur(); } });
         on(input, 'blur', commitFromInputOrRevert);
-
-        // ホイールでの値変更を抑止（iOS/WKWebView 安全側）
         on(input, 'wheel', (e) => { e.preventDefault(); input.blur(); });
-
-        // タップしたら全選択（上書きしやすく）
         on(input, 'focus', (e) => { e.target.select(); });
-
-        // 初期同期
         syncStepperDisabled();
       }
-
       initRichmenuHotspots();
       wireInputFocusToHighlight();
     });
@@ -828,7 +845,7 @@
     // ---- カードUI生成 ----
     function renderCards() {
       const wrap = $('#cardsWrap');
-      const n = cardCountCommitted; // 入力ではなく確定値を使う
+      const n = cardCountCommitted;
       wrap.innerHTML = '';
       const globalType = ($('#cardGlobalType')?.value || 'image');
 
@@ -991,7 +1008,6 @@
       setTimeout(updateCardPreview, 0);
     }
 
-    // カードタイプ変更で再描画（コミット済み枚数で）
     on($('#cardGlobalType'), 'change', renderCards);
 
     // Base64 添付
@@ -1118,12 +1134,10 @@
           checkpointReward: $('#scCheckpointReward')?.value?.trim() || '',
           guide: $('#scGuide')?.value || '',
           bonus: parseInt($('#scBonus')?.value || '0', 10),
-          // 取得制限
           limit: {
             mode: limit,
             hours: limit === 'hours' ? parseInt($('#scLimitHours')?.value || '1', 10) : null,
           },
-          // 有効期限
           expire: {
             type: expireType,
             lastUse: (expireType === 'lastUse') ? {
@@ -1135,9 +1149,7 @@
               months: parseInt($('#scExpireFirstMonth')?.value || '0', 10),
             } : null,
           },
-          // 有効期限通知
           notice,
-          // 画像は Base64 添付
           image: 'attached_as_b64_scImage_0',
         };
       }
@@ -1298,53 +1310,58 @@
 
     // 送信（GAS → その後 LINE 送信）
     async function submitForm() {
+      clearInvalids();
       const { base, detail } = collectData();
 
-      // === 必須チェック（共通） ===
-      if (!base.storeName || !base.requestType) {
-        alert('店舗名 と 大元カテゴリ は必須です');
-        return;
-      }
+      // 必須チェック（静かにUIで示す）
+      if (!base.storeName) { markInvalid($('#storeName')); showBanner('err', '店舗名を入力してください。'); $('#storeName')?.scrollIntoView({ behavior:'smooth', block:'center' }); return; }
+      if (!base.requestType) { markInvalid($('#requestType')); showBanner('err', '大元カテゴリを選択してください。'); $('#requestType')?.scrollIntoView({ behavior:'smooth', block:'center' }); return; }
 
-      // === タイプ別バリデーション ===
       if (base.requestType === 'card') {
         const cards = document.querySelectorAll('#cardsWrap .card');
-        if (cards.length === 0) { alert('カード枚数を1〜9で指定してください'); return; }
-        if (cards.length > 9) { alert('カードは最大9枚までです'); return; }
+        if (cards.length === 0) { markInvalid($('#cardCount')); showBanner('err', 'カード枚数は1〜9で指定してください。'); $('#cardCount')?.scrollIntoView({ behavior:'smooth', block:'center' }); return; }
+        if (cards.length > 9) { markInvalid($('#cardCount')); showBanner('err', 'カードは最大9枚までです。'); $('#cardCount')?.scrollIntoView({ behavior:'smooth', block:'center' }); return; }
 
         const cardType = ($('#cardGlobalType')?.value || 'image');
         for (let i = 0; i < cards.length; i++) {
           const card = cards[i];
           const img = card.querySelector('.cd-image');
           const files = img?.files || [];
-          if (!files.length) { alert(`カード${i + 1}: 画像を1枚選択してください`); return; }
-          if (files.length > 1) { alert(`カード${i + 1}: 画像は1枚のみ選択してください`); return; }
+          if (!files.length) { markInvalid(img); showBanner('err', `カード${i+1}：画像を1枚選択してください。`); img?.scrollIntoView({ behavior:'smooth', block:'center' }); return; }
+          if (files.length > 1) { markInvalid(img); showBanner('err', `カード${i+1}：画像は1枚のみ選択してください。`); img?.scrollIntoView({ behavior:'smooth', block:'center' }); return; }
 
           if (cardType === 'product') {
-            const title = card.querySelector('.pd-title')?.value.trim();
-            if (!title) { alert(`カード${i + 1}: カードタイトル（商品）は必須です`); return; }
+            const title = card.querySelector('.pd-title');
+            if (!title?.value.trim()) { markInvalid(title); showBanner('err', `カード${i+1}：カードタイトル（商品）は必須です。`); title?.scrollIntoView({ behavior:'smooth', block:'center' }); return; }
           } else if (cardType === 'location') {
-            const title = card.querySelector('.lc-title')?.value.trim();
+            const title = card.querySelector('.lc-title');
             const hours = card.querySelector('.lc-hours')?.value.trim();
             const priceText = card.querySelector('.lc-priceText')?.value.trim();
-            if (!title) { alert(`カード${i + 1}: カードタイトル（ロケーション）は必須です`); return; }
-            if (hours && priceText) { alert(`カード${i + 1}: 「時間」と「価格」はどちらか一方のみ入力してください`); return; }
+            if (!title?.value.trim()) { markInvalid(title); showBanner('err', `カード${i+1}：カードタイトル（ロケーション）は必須です。`); title?.scrollIntoView({ behavior:'smooth', block:'center' }); return; }
+            if (hours && priceText) { markInvalid(card.querySelector('.lc-hours')); markInvalid(card.querySelector('.lc-priceText')); showBanner('err', `カード${i+1}：「時間」と「価格」はどちらか一方のみ入力してください。`); title?.scrollIntoView({ behavior:'smooth', block:'center' }); return; }
           } else if (cardType === 'person') {
-            const name = card.querySelector('.ps-name')?.value.trim();
-            if (!name) { alert(`カード${i + 1}: 名前（人物）は必須です`); return; }
+            const name = card.querySelector('.ps-name');
+            if (!name?.value.trim()) { markInvalid(name); showBanner('err', `カード${i+1}：名前（人物）は必須です。`); name?.scrollIntoView({ behavior:'smooth', block:'center' }); return; }
           }
 
           const btn1 = { label: (card.querySelector('.btn1-label')?.value || '').trim(), dest: (card.querySelector('.btn1-dest')?.value || '').trim() };
-          const btns = (cardType === 'image')
-            ? [btn1]
-            : [btn1, { label: (card.querySelector('.btn2-label')?.value || '').trim(), dest: (card.querySelector('.btn2-dest')?.value || '').trim() }];
+          const btns = (cardType === 'image') ? [btn1] : [btn1, { label: (card.querySelector('.btn2-label')?.value || '').trim(), dest: (card.querySelector('.btn2-dest')?.value || '').trim() }];
 
           for (let j = 0; j < btns.length; j++) {
             const b = btns[j];
             const any = !!(b.label || b.dest);
-            if (any && (!b.label || !b.dest)) { alert(`カード${i + 1}: アクションボタン${j + 1}は「ボタン名」と「遷移先」を両方入力してください`); return; }
+            if (any && (!b.label || !b.dest)) {
+              const target = j === 0 ? card.querySelector('.btn1-label') : card.querySelector('.btn2-label');
+              markInvalid(target);
+              showBanner('err', `カード${i+1}：アクションボタン${j+1}は「ボタン名」と「遷移先」を両方入力してください。`);
+              target?.scrollIntoView({ behavior:'smooth', block:'center' });
+              return;
+            }
             if (b.dest && /^https?:\/\//i.test(b.dest) === false && b.dest.includes('http')) {
-              alert(`カード${i + 1}: アクションボタン${j + 1}の遷移先がURLらしいですが http(s):// から始めてください`);
+              const target = j === 0 ? card.querySelector('.btn1-dest') : card.querySelector('.btn2-dest');
+              markInvalid(target);
+              showBanner('err', `カード${i+1}：遷移先がURLらしい場合は http(s):// から始めてください。`);
+              target?.scrollIntoView({ behavior:'smooth', block:'center' });
               return;
             }
           }
@@ -1354,17 +1371,30 @@
       if (base.requestType === 'richmenu') {
         const btns = (detail.richmenu?.buttons || []);
         const invalid = btns.find(b => (b.label || b.type || b.value) && !(b.label && b.type && b.value));
-        if (invalid) { alert(`ボタン${invalid.index}: 「ボタン名」「遷移先タイプ」「遷移先内容」をすべて入力してください`); return; }
+        if (invalid) {
+          const target = document.querySelector(`#rmBtn${invalid.index}`);
+          markInvalid(target);
+          showBanner('err', `ボタン${invalid.index}：「ボタン名」「遷移先タイプ」「遷移先内容」をすべて入力してください。`);
+          target?.scrollIntoView({ behavior:'smooth', block:'center' });
+          return;
+        }
       }
 
       if (base.requestType === 'coupon') {
         const cp = detail.coupon || {};
-        if (!cp?.name) { alert('クーポン名を入力してください'); return; }
+        if (!cp?.name) {
+          markInvalid($('#cpNoneName') || $('#cpLotteryName') || $('#cpReferralName'));
+          showBanner('err', 'クーポン名を入力してください。');
+          ($('#cpNoneName') || $('#cpLotteryName') || $('#cpReferralName'))?.scrollIntoView({ behavior:'smooth', block:'center' });
+          return;
+        }
       }
 
       if (base.requestType === 'other') {
         if (!detail.other?.text && (!$('#otherImages') || !$('#otherImages').files.length)) {
-          alert('自由記述または画像のどちらかを入力してください');
+          markInvalid($('#otherText'));
+          showBanner('err', '自由記述または画像のどちらかを入力してください。');
+          $('#otherText')?.scrollIntoView({ behavior:'smooth', block:'center' });
           return;
         }
       }
@@ -1376,29 +1406,21 @@
       await appendFilesBase64(fd, '#scImage', 'scImage');
       await appendFilesBase64(fd, '#otherImages', 'othImage');
 
-      let gasOk = false;
       try {
         const res = await fetch(GAS_URL, { method: 'POST', body: fd });
-        const txt = await res.text();
-        let data; try { data = JSON.parse(txt); } catch { data = { raw: txt }; }
-        console.log('GAS送信結果:', data);
-        gasOk = true;
+        await res.text(); // 成功とみなす（詳細は不要）
       } catch (err) {
-        console.error('GAS送信エラー:', err);
-        alert('送信エラー: ' + err.message);
+        showBanner('err', '送信できませんでした。通信状態をご確認の上、再度お試しください。', 4500);
         return;
       }
 
       // === LINEへサマリー送信（LIFF内で開かれている場合のみ） ===
       const summary = buildLineText({ base, detail });
-      const lineOk = await trySendToLINE(summary);
+      await trySendToLINE(summary);
 
-      if (gasOk) {
-        alert(lineOk
-          ? '送信しました（GAS保存＋LINEへ送信）。画面を閉じてもOKです。'
-          : '送信しました（GAS保存完了）。※LINEアプリ外からのアクセスのため、LINE送信はスキップしました。');
-        try { if (lineOk) liff.closeWindow(); } catch { }
-      }
+      // 完了（静かなUI）
+      showBanner('ok', '送信しました。画面を閉じてもOKです。', 4000);
+      try { if (liffReady && liff.isInClient()) liff.closeWindow(); } catch {}
     }
 
     // 「その他」専用送信
@@ -1422,8 +1444,6 @@
           hidden.value = box.dataset.color;
         });
       });
-
-      // 初期選択（BLUE）
       document.querySelector('[data-color="#5a5aff"]')?.classList.add('selected');
     });
 
@@ -1439,7 +1459,7 @@
       });
     });
 
-    // 友だち紹介カスタム
+    // 友だち紹介オプション表示切替
     const referralValidSelect = document.getElementById('cpReferralValidType');
     const referralCustomDays = document.getElementById('cpReferralCustomDays');
     if (referralValidSelect) referralValidSelect.addEventListener('change', () => {
@@ -1525,7 +1545,7 @@
     // 各カテゴリのローカル操作（表示中のみ追加）
     function ensureLocalActions(sectionEl) {
       if (!sectionEl || sectionEl.querySelector('.local-actions')) return;
-      if (sectionEl.id === 'sec-other') return; // その他は専用ボタンあり
+      if (sectionEl.id === 'sec-other') return;
       const actions = document.createElement('div');
       actions.className = 'local-actions';
       actions.innerHTML = `
@@ -1536,7 +1556,7 @@
       actions.querySelector('.btnSubmitLocal').addEventListener('click', submitForm);
     }
 
-    // カード見た目プレビュー（自動反映）
+    // カード見た目プレビュー
     function updateCardPreview() {
       const wrap = document.querySelector("#cardSampleContainer");
       const cards = document.querySelectorAll("#cardsWrap .card");
@@ -1625,7 +1645,6 @@
       });
     }
 
-    // 入力のたびにプレビュー更新（カード内の変更のみ）
     document.addEventListener("change", (e) => {
       if (e.target.closest("#cardsWrap")) updateCardPreview();
       if (e.target.id === 'cardGlobalType' || e.target.id === 'cardCount') setTimeout(updateCardPreview, 200);
