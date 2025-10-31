@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>問い合わせフォーム</title>
   <style>
     :root {
@@ -92,9 +92,13 @@
       border: 1px solid var(--border);
       background: #fff;
       color: #222;
-      font-size: 15px;
+      font-size: 16px;
       box-sizing: border-box;
       transition: box-shadow .2s ease, border-color .2s ease;
+    }
+
+    html, body {
+      touch-action: manipulation;
     }
 
     textarea { min-height: 100px; resize: vertical; }
@@ -1652,6 +1656,20 @@
     document.addEventListener("input", (e) => {
       if (e.target.closest("#cardsWrap")) updateCardPreview();
     });
+
+      // ピンチ系ジェスチャー無効化（必要な環境のみ効く）
+      ['gesturestart','gesturechange','gestureend'].forEach(evt => {
+        window.addEventListener(evt, e => e.preventDefault(), { passive: false });
+      });
+      // 念のため：素早いダブルタップによるズームも抑止
+      let lastTouch = 0;
+      document.addEventListener('touchend', e => {
+        const now = Date.now();
+        if (now - lastTouch < 350) { e.preventDefault(); }
+        lastTouch = now;
+      }, { passive: false });
+
+    
   </script>
 </body>
 </html>
