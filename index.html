@@ -286,7 +286,6 @@
             <option value="richmenu">リッチメニュー（6ボタン・デザイン修正）</option>
             <option value="shopcard">ショップカード</option>
             <option value="coupon">クーポン</option>
-            <option value="other">その他（自由記述）</option>
           </select>
           <div class="mini">※選択したカテゴリのみ下に表示されます</div>
         </div>
@@ -654,22 +653,6 @@
         </div>
       </div>
     </div>
-
-    <!-- ⑥ その他（自由記述） -->
-    <div id="sec-other" class="section" style="display:none">
-      <h3>⑥ その他</h3>
-      <div class="field">
-        <label>自由記述</label>
-        <textarea id="otherText" placeholder="ご希望や補足事項を自由にお書きください"></textarea>
-      </div>
-      <div class="field">
-        <label>画像（任意・複数可）</label>
-        <input id="otherImages" type="file" multiple accept="image/*">
-      </div>
-      <div class="buttons">
-        <button class="primary" type="button" id="btnSubmitOther">この自由記述を送信</button>
-      </div>
-    </div>
   </div>
 
   <!-- 送信中オーバーレイ -->
@@ -688,7 +671,7 @@
 
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwGCUTvZgXf4PhnnTnwDWdB_p-3lZ0obhSs7ZHts3fiK6OcTo3CziM6F26Th7535IGxiw/exec";
     const $ = s => document.querySelector(s);
-    const on = (el, evt, fn) => el && el.addEventListener(evt, fn);
+    const on = (el, evt, fn, opts) => el && el.addEventListener(evt, fn, opts || false);
     const show = (el, v = true) => el.style.display = v ? '' : 'none';
 
     // === LINE連携（LIFF） ===
@@ -734,13 +717,12 @@
       if (val) localStorage.setItem(STORE_NAME_KEY, val);
     }
 
-    // セクション管理
+    // セクション管理（other は削除済み）
     const sections = {
       card: $('#sec-card'),
       richmenu: $('#sec-richmenu'),
       shopcard: $('#sec-shopcard'),
-      coupon: $('#sec-coupon'),
-      other: $('#sec-other')
+      coupon: $('#sec-coupon')
     };
 
     on($('#requestType'), 'change', () => {
@@ -1184,15 +1166,6 @@
         }
       }
 
-      // ---- ⑤ その他 ----
-      if (base.requestType === 'other') {
-        const files = Array.from($('#otherImages')?.files || []);
-        detail.other = {
-          text: ($('#otherText')?.value || '').trim(),
-          imagesMeta: files.map(f => ({ name: f.name, size: f.size, type: f.type })),
-        };
-      }
-
       return { base, detail };
     }
 
@@ -1235,8 +1208,8 @@
           if (c.type === 'product') {
             if (c.tag) push(`　タグ：${c.tag}`);
             if (c.meta?.title) push(`　タイトル：${c.meta.title}`);
-            if (c.meta?.priceText) push(`　価格：${c.meta.priceText}`);
-            if (c.meta?.desc) push(`　説明：${c.meta.desc}`);
+            if (c.meta?.priceText) push(`　価格：${c.meta?.priceText}`);
+            if (c.meta?.desc) push(`　説明：${c.meta?.desc}`);
           }
           if (c.type === 'location') {
             if (c.tag) push(`　タグ：${c.tag}`);
@@ -1310,81 +1283,6 @@
         push('・その他');
         push(`　カード取得ボーナス：${Number.isFinite(sc.bonus) ? sc.bonus : 0}pt`);
         if (sc.guide) push(`　利用ガイド：${sc.guide}`);
-        return out.join('\n');
-      }
-
-      if (t === 'coupon') {
-        const cp = detail.coupon || {};
-        push('【カテゴリー】');
-        push('クーポン');
-        push('【設定内容】');
-
-        const period = () => {
-          if (cp.type === 'referral') {
-            const s = toJP(cp.period?.start);
-            const e = toJP(cp.period?.end);
-            if (s || e) push(`　紹介期間：${s || '-'} 〜 ${e || '-'}`);
-          } else {
-            const s = toJP(cp.start);
-            const e = toJP(cp.end);
-            if (s || e) push(`　有効期間：${s || '-'} 〜 ${e || '-'}`);
-          }
-        };
-
-        if (cp.type === 'none') {
-          push('・条件なし');
-          if (cp.name) push(`　クーポン名：${cp.name}`);
-          if (cp.content) push(`　内容：${cp.content}`);
-          period();
-          if (cp.use) push(`　使用用途：${cp.use}`);
-          push(`　使用可能回数：${cp.limit === 'unlimited' ? '上限なし' : '1回のみ'}`);
-          if (cp.condition) push(`　利用条件：${cp.condition}`);
-          if (cp.guide) push(`　利用ガイド：${cp.guide}`);
-          return out.join('\n');
-        }
-
-        if (cp.type === 'lottery') {
-          push('・抽選');
-          if (cp.name) push(`　クーポン名：${cp.name}`);
-          if (cp.content) push(`　内容：${cp.content}`);
-          period();
-          push(`　当選率：${cp.rate ?? '-'}%`);
-          push(`　当選者上限：${cp.maxWinners ?? '-'}名`);
-          if (cp.use) push(`　使用用途：${cp.use}`);
-          push(`　使用可能回数：${cp.limit === 'unlimited' ? '上限なし' : '1回のみ'}`);
-          if (cp.condition) push(`　利用条件：${cp.condition}`);
-          if (cp.guide) push(`　利用ガイド：${cp.guide}`);
-          return out.join('\n');
-        }
-
-        if (cp.type === 'referral') {
-          push('・友だち紹介');
-          if (cp.name) push(`　クーポン名：${cp.name}`);
-          period();
-          if (cp.valid?.days) push(`　獲得日からの有効期間：${cp.valid.days}日`);
-          const countText = cp.acquireCount?.type === 'custom'
-            ? `${cp.acquireCount.value ?? '-'}回`
-            : '上限なし';
-          push(`　獲得可能回数：${countText}`);
-          if (cp.content) push(`　内容：${cp.content}`);
-          if (cp.use) push(`　使用用途：${cp.use}`);
-          if (cp.condition) push(`　利用条件：${cp.condition}`);
-          if (cp.note) push(`　注意事項：${cp.note}`);
-          if (cp.guide) push(`　利用ガイド：${cp.guide}`);
-          return out.join('\n');
-        }
-
-        push('・設定が未完了です');
-        return out.join('\n');
-      }
-
-      if (t === 'other') {
-        push('【カテゴリー】');
-        push('その他（自由記述）');
-        push('【設定内容】');
-        if (detail.other?.text) push(`　自由記述：${detail.other.text}`);
-        const n = detail.other?.imagesMeta?.length || 0;
-        push(`　画像枚数：${n}`);
         return out.join('\n');
       }
 
@@ -1475,13 +1373,6 @@
         if (!cp?.name) { alert('クーポン名を入力してください'); return; }
       }
 
-      if (base.requestType === 'other') {
-        if (!detail.other?.text && (!$('#otherImages') || !$('#otherImages').files.length)) {
-          alert('自由記述または画像のどちらかを入力してください');
-          return;
-        }
-      }
-
       // ここから送信処理（ガードON＋ローディング表示）
       isSubmitting = true;
       setLoading(true);
@@ -1492,7 +1383,6 @@
       fd.append('payload', JSON.stringify({ base, detail }));
       await appendFilesBase64(fd, '#cardsWrap', 'cardImage');
       await appendFilesBase64(fd, '#scImage', 'scImage');
-      await appendFilesBase64(fd, '#otherImages', 'othImage');
 
       let lineOk = false;
       try {
@@ -1519,131 +1409,9 @@
       try { if (lineOk) liff.closeWindow(); } catch {}
     }
 
-    // 「その他」専用送信
-    on($('#btnSubmitOther'), 'click', () => {
-      const sel = $('#requestType');
-      if (sel && sel.value !== 'other') sel.value = 'other';
-      Object.values(sections).forEach(s => show(s, false));
-      show(sections.other, true);
-      submitForm();
-    });
-
-    // カラー選択
-    document.addEventListener('DOMContentLoaded', () => {
-      const boxes = document.querySelectorAll('#colorSamples .color-box');
-      const hidden = document.getElementById('scColor');
-
-      boxes.forEach(box => {
-        box.addEventListener('click', () => {
-          boxes.forEach(b => b.classList.remove('selected'));
-          box.classList.add('selected');
-          hidden.value = box.dataset.color;
-        });
-      });
-      document.querySelector('[data-color="#5a5aff"]')?.classList.add('selected');
-    });
-
-    // クーポンカード切替
-    document.querySelectorAll('.coupon-card').forEach(card => {
-      card.addEventListener('click', () => {
-        document.querySelectorAll('.coupon-card').forEach(c => c.classList.remove('active'));
-        card.classList.add('active');
-        const type = card.dataset.type;
-        document.getElementById('cpAcquireType').value = type;
-        document.querySelectorAll('.coupon-settings').forEach(s => s.style.display = 'none');
-        document.getElementById(`cp-${type}-settings`).style.display = 'block';
-      });
-    });
-
-    // 友だち紹介カスタム
-    const referralValidSelect = document.getElementById('cpReferralValidType');
-    const referralCustomDays = document.getElementById('cpReferralCustomDays');
-    if (referralValidSelect) referralValidSelect.addEventListener('change', () => {
-      referralCustomDays.style.display = referralValidSelect.value === 'custom' ? 'block' : 'none';
-    });
-    const referralCountType = document.getElementById('cpReferralCountType');
-    const referralCountCustom = document.getElementById('cpReferralCountCustom');
-    if (referralCountType) referralCountType.addEventListener('change', () => {
-      referralCountCustom.style.display = referralCountType.value === 'custom' ? 'block' : 'none';
-    });
-
-    // リッチメニュー：ホットスポット
-    function initRichmenuHotspots() {
-      const wrap = document.getElementById('rmMapWrap');
-      const img = document.getElementById('rmMapImg');
-      if (!wrap || !img) return;
-
-      const grid = [
-        { area: 'A', btn: 1, col: 0, row: 0 },
-        { area: 'B', btn: 2, col: 1, row: 0 },
-        { area: 'C', btn: 3, col: 2, row: 0 },
-        { area: 'D', btn: 4, col: 0, row: 1 },
-        { area: 'E', btn: 5, col: 1, row: 1 },
-        { area: 'F', btn: 6, col: 2, row: 1 },
-      ];
-
-      const renderHotspots = () => {
-        const wrapRect = wrap.getBoundingClientRect();
-        const imgRect  = img.getBoundingClientRect();
-        const imgW = imgRect.width;
-        const imgH = imgRect.height;
-        if (!imgW || !imgH) return;
-
-        const offsetX = imgRect.left - wrapRect.left;
-        const offsetY = imgRect.top  - wrapRect.top;
-
-        const cellW = imgW / 3;
-        const cellH = imgH / 2;
-
-        wrap.querySelectorAll('.rm-hot').forEach(el => el.remove());
-
-        grid.forEach(g => {
-          const d = document.createElement('div');
-          d.className = 'rm-hot';
-          d.dataset.btn = g.btn;
-          d.style.left   = `${offsetX + g.col * cellW}px`;
-          d.style.top    = `${offsetY + g.row * cellH}px`;
-          d.style.width  = `${cellW}px`;
-          d.style.height = `${cellH}px`;
-          d.addEventListener('click', () => highlightAndScroll(g.btn));
-          wrap.appendChild(d);
-        });
-      };
-
-      if (img.complete) renderHotspots();
-      else img.addEventListener('load', renderHotspots);
-      window.addEventListener('resize', renderHotspots);
-    }
-
-    function highlightAndScroll(btnIndex) {
-      const card = document.getElementById('rmBtn' + btnIndex);
-      const hotspot = document.querySelector(`.rm-hot[data-btn="${btnIndex}"]`);
-      if (!card || !hotspot) return;
-      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      hotspot.classList.add('active');
-      setTimeout(() => hotspot.classList.remove('active'), 1200);
-    }
-
-    window.addEventListener('load', () => {
-      initRichmenuHotspots();
-      wireInputFocusToHighlight();
-    });
-
-    function wireInputFocusToHighlight() {
-      for (let i = 1; i <= 6; i++) {
-        const card = document.getElementById('rmBtn' + i);
-        if (!card) continue;
-        card.querySelectorAll('input,select,textarea').forEach(el => {
-          el.addEventListener('focus', () => { });
-          el.addEventListener('blur', () => { });
-        });
-      }
-    }
-
     // 各カテゴリのローカル操作（表示中のみ追加）
     function ensureLocalActions(sectionEl) {
       if (!sectionEl || sectionEl.querySelector('.local-actions')) return;
-      if (sectionEl.id === 'sec-other') return; // その他は専用ボタンあり
       const actions = document.createElement('div');
       actions.className = 'local-actions';
       actions.innerHTML = `
