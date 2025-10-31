@@ -382,6 +382,37 @@
         flex-direction: row;
       }
     }
+
+    .color-samples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    .color-box {
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      text-align: center;
+      width: 100px;
+      background: var(--c);
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .color-box span {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+    
+    .color-box.selected {
+      border: 2px solid var(--accent);
+      box-shadow: 0 0 0 2px rgba(6, 199, 85, 0.3);
+      transform: scale(1.05);
+    }
+    
   </style>
 </head>
 
