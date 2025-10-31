@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -267,7 +266,7 @@
       <div class="row" style="align-items:center">
         <div class="field" style="max-width:220px">
           <label>作成枚数（1〜9）<span class="req">*</span></label>
-          <input id="cardCount" type="number" min="1" max="9" value="1">
+          <input id="cardCount" type="number" min="1" max="9" step="1" inputmode="numeric" pattern="[0-9]*" value="1">
           <div class="mini">変更すると下のカードUIを再描画します</div>
         </div>
         <div class="mini">各カードは<b>画像1枚必須</b>／タグ（任意）／アクションボタン（任意）を設定できます</div>
@@ -410,7 +409,6 @@
     <div id="sec-shopcard" class="section" style="display:none">
       <h3>④ ショップカード</h3>
 
-      <!-- ★閉じタグ不整合を修正：grid をこのブロックで完結 -->
       <div class="grid">
         <div class="field"><label>カード名</label><input id="scName" type="text"></div>
         <div class="field">
@@ -657,7 +655,7 @@
       show(sections[v], true);
       if (v === 'card') renderCards();
 
-      // クーポン初期表示を常に「条件なし」に戻す（切替で残像しない）
+      // クーポン初期表示を常に「条件なし」に戻す
       if (v === 'coupon') {
         document.querySelectorAll('.coupon-card').forEach(c => c.classList.remove('active'));
         const none = document.querySelector('.coupon-card[data-type="none"]');
@@ -670,12 +668,19 @@
       ensureLocalActions(sections[v]); // 表示中セクションのみに設置
     });
 
-    // ---- カードUI生成（元仕様を維持） ----
+    // ---- 安全な枚数取得（1..9に補正） ----
+    function getCardCountSafe() {
+      const el = $('#cardCount');
+      const num = Number.isFinite(el.valueAsNumber) ? el.valueAsNumber : parseInt(el.value || '1', 10);
+      const n = Math.min(9, Math.max(1, Math.round(num || 1)));
+      el.value = String(n);
+      return n;
+    }
+
+    // ---- カードUI生成 ----
     function renderCards() {
       const wrap = $('#cardsWrap');
-      const cntEl = $('#cardCount');
-      const n = Math.max(1, Math.min(9, parseInt(cntEl?.value || '1')));
-      if (cntEl) cntEl.value = String(n);
+      const n = getCardCountSafe();
       wrap.innerHTML = '';
       const globalType = ($('#cardGlobalType')?.value || 'image');
 
@@ -834,9 +839,17 @@
         card.innerHTML = `${buildSubfields(globalType)}${buildActions(globalType)}`;
         wrap.appendChild(card);
       }
+
+      // 再描画後にプレビュー更新
+      setTimeout(updateCardPreview, 0);
     }
 
-    on($('#cardCount'), 'input', renderCards);
+    // イベント：枚数は入力中に補正、確定で再描画
+    on($('#cardCount'), 'input', () => { getCardCountSafe(); });
+    on($('#cardCount'), 'change', () => { renderCards(); });
+    on($('#cardCount'), 'blur',   () => { renderCards(); });
+
+    // カードタイプ変更で再描画
     on($('#cardGlobalType'), 'change', renderCards);
 
     // Base64 添付
@@ -1145,7 +1158,7 @@
     async function submitForm() {
       const { base, detail } = collectData();
 
-      // === 必須チェック（共通）
+      // === 必須チェック（共通） ===
       if (!base.storeName || !base.requestType) {
         alert('店舗名 と 大元カテゴリ は必須です');
         return;
@@ -1342,7 +1355,6 @@
         });
       };
 
-      // ★画像ロード後＆リサイズで確実に描画
       if (img.complete) renderHotspots();
       else img.addEventListener('load', renderHotspots);
       window.addEventListener('resize', renderHotspots);
@@ -1360,7 +1372,6 @@
     window.addEventListener('load', () => {
       initRichmenuHotspots();
       wireInputFocusToHighlight();
-      // mountLocalActionsToAll(); ← 削除：表示時のみ ensureLocalActions で設置
     });
 
     function wireInputFocusToHighlight() {
@@ -1477,16 +1488,11 @@
       });
     }
 
+    // 入力のたびにプレビュー更新（カード内の変更のみ）
     document.addEventListener("change", (e) => {
       if (e.target.closest("#cardsWrap")) updateCardPreview();
       if (e.target.id === 'cardGlobalType' || e.target.id === 'cardCount') setTimeout(updateCardPreview, 200);
     });
-
-    const originalRenderCards = renderCards;
-    renderCards = function () {
-      originalRenderCards();
-      setTimeout(updateCardPreview, 200);
-    };
   </script>
 </body>
 </html>
