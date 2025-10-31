@@ -384,18 +384,17 @@
     }
 
     .color-samples {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+      gap: 12px;
     }
     
     .color-box {
-      border: 2px solid var(--border);
+      border: 2px solid var(--border, #ddd);
       border-radius: 8px;
-      padding: 8px 10px;
+      padding: 8px;
       font-size: 12px;
       text-align: center;
-      width: 100px;
       background: var(--c);
       color: #fff;
       cursor: pointer;
@@ -403,15 +402,22 @@
     }
     
     .color-box span {
-      font-size: 11px;
+      display: block;
+      font-size: 10px;
       opacity: 0.8;
     }
     
     .color-box.selected {
-      border: 2px solid var(--accent);
+      border: 2px solid #06c755; /* LINE緑をアクセントに */
       box-shadow: 0 0 0 2px rgba(6, 199, 85, 0.3);
       transform: scale(1.05);
     }
+    
+    .color-box[data-color="#ffffff"] {
+      border: 1px solid #ccc;
+    }
+
+    
     
   </style>
 </head>
@@ -1470,6 +1476,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       const boxes = document.querySelectorAll('#colorSamples .color-box');
       const hidden = document.getElementById('scColor');
+    
       boxes.forEach(box => {
         box.addEventListener('click', () => {
           boxes.forEach(b => b.classList.remove('selected'));
@@ -1477,6 +1484,9 @@
           hidden.value = box.dataset.color;
         });
       });
+    
+      // 初期選択（例：RED）
+      document.querySelector('[data-color="#ff3b30"]')?.classList.add('selected');
     });
 
     // クーポンカード切替
