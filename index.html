@@ -672,7 +672,10 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwGCUTvZgXf4PhnnTnwDWdB_p-3lZ0obhSs7ZHts3fiK6OcTo3CziM6F26Th7535IGxiw/exec";
     const $ = s => document.querySelector(s);
     const on = (el, evt, fn, opts) => el && el.addEventListener(evt, fn, opts || false);
-    const show = (el, v = true) => el.style.display = v ? '' : 'none';
+    const show = (el, v = true) => {
+      if (!el) return;
+      el.style.display = v ? '' : 'none';
+    };
 
     // === LINE連携（LIFF） ===
     const LIFF_ID = '2006164734-B8ynaQK5';
@@ -724,6 +727,91 @@
       shopcard: $('#sec-shopcard'),
       coupon: $('#sec-coupon')
     };
+
+    // ★ショップカード：テーマカラー選択
+    function setupShopcardColor() {
+      const hidden = $('#scColor');
+      const container = $('#colorSamples');
+      if (!hidden || !container) return;
+    
+      const boxes = Array.from(container.querySelectorAll('.color-box'));
+    
+      const applySelected = (color) => {
+        boxes.forEach(box => {
+          box.classList.toggle('selected', box.dataset.color === color);
+        });
+      };
+    
+      boxes.forEach(box => {
+        box.addEventListener('click', () => {
+          const color = box.dataset.color;
+          if (!color) return;
+          hidden.value = color;
+          applySelected(color);
+        });
+      });
+    
+      // 初期状態（hidden の値に合わせる）
+      applySelected(hidden.value);
+    }
+    
+    document.addEventListener('DOMContentLoaded', setupShopcardColor);
+
+    // ★クーポン UI 初期化
+    function setupCouponUI() {
+      const typeInput = $('#cpAcquireType');
+      const cards = document.querySelectorAll('.coupon-card');
+      const settings = {
+        none: $('#cp-none-settings'),
+        lottery: $('#cp-lottery-settings'),
+        referral: $('#cp-referral-settings'),
+      };
+    
+      // 獲得条件カードの切り替え
+      if (cards.length && typeInput) {
+        cards.forEach(card => {
+          card.addEventListener('click', () => {
+            const t = card.dataset.type;
+            if (!t || !settings[t]) return;
+    
+            // hidden に反映
+            typeInput.value = t;
+    
+            // 見た目リセット
+            cards.forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+    
+            // 各設定ブロックの表示切り替え
+            Object.values(settings).forEach(el => { if (el) el.style.display = 'none'; });
+            settings[t].style.display = 'block';
+          });
+        });
+      }
+    
+      // 友だち紹介：有効期限タイプ（7日/30日/カスタム）
+      const validTypeSel = $('#cpReferralValidType');
+      const validCustom = $('#cpReferralCustomDays');
+      if (validTypeSel && validCustom) {
+        const syncValid = () => {
+          validCustom.style.display = validTypeSel.value === 'custom' ? '' : 'none';
+        };
+        validTypeSel.addEventListener('change', syncValid);
+        syncValid(); // 初期表示
+      }
+    
+      // 友だち紹介：獲得回数タイプ（上限なし/カスタム）
+      const countTypeSel = $('#cpReferralCountType');
+      const countCustom = $('#cpReferralCountCustom');
+      if (countTypeSel && countCustom) {
+        const syncCount = () => {
+          countCustom.style.display = countTypeSel.value === 'custom' ? '' : 'none';
+        };
+        countTypeSel.addEventListener('change', syncCount);
+        syncCount(); // 初期表示
+      }
+    }
+    
+    document.addEventListener('DOMContentLoaded', setupCouponUI);
 
     on($('#requestType'), 'change', () => {
       Object.values(sections).forEach(s => show(s, false));
@@ -1182,16 +1270,17 @@
     // 送信用サマリー（カテゴリ別テンプレ）
     function buildLineText({ base, detail }) {
       const out = [];
-      const push = (s='') => out.push(s);
+      const push = (s = '') => out.push(s);
       const t = base.requestType;
-
+    
       const typeLabel = {
         image: 'イメージ',
         product: 'プロダクト',
         location: 'ロケーション',
         person: 'パーソン',
       };
-
+    
+      // --- カードタイプメッセージ ---
       if (t === 'card') {
         const cards = detail.cards || [];
         const label = typeLabel[cards[0]?.type || 'image'] || 'イメージ';
@@ -1230,7 +1319,8 @@
         });
         return out.join('\n');
       }
-
+    
+      // --- リッチメニュー ---
       if (t === 'richmenu') {
         push('【カテゴリー】');
         push('リッチメニュー');
@@ -1244,7 +1334,8 @@
         });
         return out.join('\n');
       }
-
+    
+      // --- ショップカード ---
       if (t === 'shopcard') {
         const sc = detail.shopcard || {};
         push('【カテゴリー】');
@@ -1260,7 +1351,7 @@
           push(`　チェック特典：${sc.checkpointReward || '-'}`);
         }
         push(`　画像格納：【${sc.scImagePresent ? '有' : '無'}】`);
-
+    
         push('・付与制限');
         if (sc.limit?.mode === 'hours') {
           push(`　指定時間内の重複付与を禁止：${sc.limit.hours}時間`);
@@ -1269,7 +1360,7 @@
         } else {
           push('　制限なし');
         }
-
+    
         push('・有効期限');
         if (sc.expire?.type === 'lastUse') {
           push(`　最終利用日から：${sc.expire.lastUse?.years ?? 0}年 ${sc.expire.lastUse?.months ?? 0}ヶ月`);
@@ -1278,21 +1369,91 @@
         } else {
           push('　設定しない');
         }
-        push(`　通知：${({ '1day':'前日', '3days':'3日前', '1week':'1週間前', 'none':'通知しない' }[sc.notice] || '-')}`);
-
+        push(`　通知：${({ '1day': '前日', '3days': '3日前', '1week': '1週間前', 'none': '通知しない' }[sc.notice] || '-')}`);
+    
         push('・その他');
         push(`　カード取得ボーナス：${Number.isFinite(sc.bonus) ? sc.bonus : 0}pt`);
         if (sc.guide) push(`　利用ガイド：${sc.guide}`);
         return out.join('\n');
       }
-
-      // フォールバック
+    
+      // --- クーポン ---
+      if (t === 'coupon') {
+        const cp = detail.coupon || {};
+        push('【カテゴリー】');
+        push('クーポン');
+    
+        if (cp.type === 'none') {
+          push('【獲得条件】条件なし（全ユーザー獲得可）');
+          push('【設定内容】');
+          if (cp.name)    push(`　クーポン名：${cp.name}`);
+          if (cp.content) push(`　内容：${cp.content}`);
+          if (cp.start || cp.end) {
+            push(`　有効期間：${toJP(cp.start)} ～ ${toJP(cp.end)}`);
+          }
+          if (cp.use) push(`　使用用途：${cp.use}`);
+          push(`　使用回数：${cp.limit === 'unlimited' ? '上限なし' : '1回のみ'}`);
+          if (cp.condition) push(`　利用条件：${cp.condition}`);
+          if (cp.guide) push(`　利用ガイド：\n${cp.guide}`);
+          return out.join('\n');
+        }
+    
+        if (cp.type === 'lottery') {
+          push('【獲得条件】抽選');
+          push('【設定内容】');
+          if (cp.name)    push(`　クーポン名：${cp.name}`);
+          if (cp.content) push(`　内容：${cp.content}`);
+          if (cp.start || cp.end) {
+            push(`　有効期間：${toJP(cp.start)} ～ ${toJP(cp.end)}`);
+          }
+          if (Number.isFinite(cp.rate))      push(`　当選確率：${cp.rate}%`);
+          if (cp.maxWinners)                 push(`　当選上限：${cp.maxWinners}人`);
+          if (cp.use)                        push(`　使用用途：${cp.use}`);
+          push(`　使用回数：${cp.limit === 'unlimited' ? '上限なし' : '1回のみ'}`);
+          if (cp.condition)                  push(`　利用条件：${cp.condition}`);
+          if (cp.guide)                      push(`　利用ガイド：\n${cp.guide}`);
+          return out.join('\n');
+        }
+    
+        if (cp.type === 'referral') {
+          push('【獲得条件】友だち紹介');
+          push('【設定内容】');
+          if (cp.name) push(`　クーポン名：${cp.name}`);
+          if (cp.period?.start || cp.period?.end) {
+            push(`　紹介期間：${toJP(cp.period.start)} ～ ${toJP(cp.period.end)}`);
+          }
+          if (cp.valid?.days) {
+            push(`　獲得日からの有効期間：${cp.valid.days}日間`);
+          }
+          if (cp.content) push(`　内容：${cp.content}`);
+          if (cp.use)     push(`　使用用途：${cp.use}`);
+    
+          if (cp.acquireCount?.type === 'custom' && cp.acquireCount.value) {
+            push(`　獲得可能回数：${cp.acquireCount.value}回まで`);
+          } else {
+            push('　獲得可能回数：上限なし');
+          }
+    
+          if (cp.condition) push(`　利用条件：${cp.condition}`);
+          if (cp.note)      push(`　注意事項：\n${cp.note}`);
+          if (cp.guide)     push(`　利用ガイド：\n${cp.guide}`);
+          return out.join('\n');
+        }
+    
+        // 不明タイプ
+        push('【設定内容】');
+        push('クーポン設定の取得に失敗しました。');
+        return out.join('\n');
+      }
+    
+      // --- フォールバック ---
       push('【カテゴリー】');
       push(t || '-');
       push('【設定内容】');
       push('設定内容の取得に失敗しました。');
       return out.join('\n');
     }
+
 
     // ====== 二重送信防止（ローディング＆ガード） ======
     let isSubmitting = false;
